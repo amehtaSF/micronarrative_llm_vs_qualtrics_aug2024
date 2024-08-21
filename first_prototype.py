@@ -638,6 +638,9 @@ def finaliseScenario():
     if package['judgment'] == "Ready as is!":
         st.markdown(":tada: Yay! :tada:")
         st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! ")
+        st.markdown("")
+        st.markdown("Please keep this window open until you complete the entire study.")
+        st.markdown("")
         st.markdown(f":green[{package['scenario']}]")
         
         # Save the final accepted scenario to the database
@@ -791,9 +794,9 @@ else:
         st.markdown(''' 
                     ## Welcome to our teenbot-prototype.
 
-                    \n In this task you’re going to engage with a prototype chatbot that asks you to imagine certain social media experiences. We would like you to imagine that you are a young person who regularly uses social media. Please answer the questions from the perspective of this young person. You can refer to *general* social media experiences or situations that have happened to people you know but please do not share any personal data or experiences. 
+                    \n In this task you’re going to engage with a prototype chatbot that asks you to recall experiences using social media. 
                     
-                    \n \n **It's important that you do not report situations that contain personal information about yourself.** 
+                    \n \n **It's important that you do not report situations that contain information that would allow someone to identify anyone in the story including yourself.** 
                     
                     \n \n To proceed to the task, please confirm that you have read and understood this information.
         ''')
