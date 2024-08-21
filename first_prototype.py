@@ -38,7 +38,6 @@ os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
 os.environ["LANGCHAIN_API_KEY"] = st.secrets['LANGCHAIN_API_KEY']
 os.environ["LANGCHAIN_PROJECT"] = st.secrets['LANGCHAIN_PROJECT']
 os.environ["LANGCHAIN_TRACING_V2"] = 'true'
-os.environ["FLASK_API_KEY"] = st.secrets['FLASK_API_KEY']
 
 
 ## simple switch previously used to help debug 
@@ -65,8 +64,6 @@ def make_chat_id():
 
 if "chat_id" not in st.session_state:
     st.session_state["chat_id"] = make_chat_id()
-    if "pid" in st.query_params:
-        update_str_entry(st.session_state["chat_id"], "prolific_id", st.query_params["pid"])
     
 init_state = {
     "run_id": None,
@@ -224,7 +221,7 @@ def collectFeedback(answer, column_id,  scenario):
         # and score value
         feedback_type_str = f"{answer['type']} {score} {answer['text']} \n {scenario}"
         
-        update_str_entry(st.session_state["chat_id"], f'rating_{column_id}', score)
+        # update_str_entry(st.session_state["chat_id"], f'rating_{column_id}', score)
         
 
         st.session_state.temp_debug = feedback_type_str
@@ -375,6 +372,11 @@ def summariseData(testing = False):
 
     # we need the user to do an action (e.g., button click) to generate a natural streamlit refresh (so we can show scenarios on a clear page). Other options like streamlit rerun() have been marked as 'failed runs' on Langsmith which is annoying. 
     st.button("I'm ready -- show me!", key = 'progressButton')
+    
+    # Save scenario proposals to the database
+    update_str_entry(st.session_state["chat_id"], "scenario_1", st.session_state.response_1['output_scenario'])
+    update_str_entry(st.session_state["chat_id"], "scenario_2", st.session_state.response_2['output_scenario'])
+    update_str_entry(st.session_state["chat_id"], "scenario_3", st.session_state.response_3['output_scenario'])
 
 
 def testing_reviewSetUp():
@@ -404,6 +406,9 @@ def click_selection_yes(button_num, scenario):
     """
     st.session_state.scenario_selection = button_num
     
+    # Save scenario choice to the database
+    update_str_entry(st.session_state["chat_id"], "scenario_choice", button_num)
+    
     ## if we are testing, the answer_set might not have been set & needs to be added:
     if 'answer_set' not in st.session_state:
         st.session_state['answer_set'] = "Testing - no answers"
@@ -418,6 +423,14 @@ def click_selection_yes(button_num, scenario):
         'fb2': st.session_state['col2_fb'],
         'fb3': st.session_state['col3_fb']
     }
+    
+    # Save thumbs and optional text to the database
+    update_str_entry(st.session_state["chat_id"], "thumb_1", st.session_state['col1_fb']['score'])
+    update_str_entry(st.session_state["chat_id"], "thumb_2", st.session_state['col2_fb']['score'])
+    update_str_entry(st.session_state["chat_id"], "thumb_3", st.session_state['col3_fb']['score'])
+    update_str_entry(st.session_state["chat_id"], "thumb_1_text", st.session_state['col1_fb']['text'])
+    update_str_entry(st.session_state["chat_id"], "thumb_2_text", st.session_state['col2_fb']['text'])
+    update_str_entry(st.session_state["chat_id"], "thumb_3_text", st.session_state['col3_fb']['text'])
 
     st.session_state.scenario_package = {
             'scenario': scenario,
@@ -467,7 +480,8 @@ def scenario_selection (popover, button_num, scenario):
         sliderOptions = ["Not really ", "Needs some edits", "Pretty good but I'd like to tweak it", "Ready as is!"]
         slider_name = f'slider_{button_num}'
 
-        st.select_slider("Judge_scenario", label_visibility= 'hidden', key = slider_name, options = sliderOptions, on_change= sliderChange, args = (slider_name,))
+        scenario_rating = st.select_slider("Judge_scenario", label_visibility= 'hidden', key = slider_name, options = sliderOptions, on_change= sliderChange, args = (slider_name,))
+        update_str_entry(st.session_state["chat_id"], "scenario_rating", scenario_rating)
         
 
         c1, c2 = st.columns(2)
@@ -625,6 +639,10 @@ def finaliseScenario():
         st.markdown(":tada: Yay! :tada:")
         st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! ")
         st.markdown(f":green[{package['scenario']}]")
+        
+        # Save the final accepted scenario to the database
+        update_str_entry(st.session_state["chat_id"], "final_scenario", package['scenario'])
+        
     
     
     # if the user still wants to continue adapting
@@ -646,6 +664,7 @@ def finaliseScenario():
             # once user enters something 
             if prompt:
                 st.chat_message("human").write(prompt) 
+                append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "human", "content": prompt})
 
                 # use a new chain, drawing on the prompt_adaptation template from lc_prompts.py
                 adaptation_prompt = PromptTemplate(input_variables=["input", "scenario"], template = prompt_adaptation)
@@ -663,7 +682,9 @@ def finaliseScenario():
                     # st.write(new_response)
 
                 st.markdown(f"Here is the adapted response: \n :orange[{new_response['new_scenario']}]\n\n **what do you think?**")
-                update_str_entry(st.session_state["chat_id"], "final_scenario", new_response['new_scenario'])
+                append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "assistant", "content": new_response['new_scenario']})
+                
+               
               
                 c1, c2  = st.columns(2)
 
