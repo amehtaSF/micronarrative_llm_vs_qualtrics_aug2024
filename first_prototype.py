@@ -56,10 +56,11 @@ st.title("📖 Study bot")
 def make_chat_id():
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
     if "pid" in st.query_params:
-        chat_id = f'{st.query_params["pid"]}-{ts}'
+        prolific_id = st.query_params["pid"]
     else:
-        chat_id = f'NA-{ts}'
-    create_entry(chat_id)  # create a new entry in the database
+        prolific_id = 00000
+    chat_id = f'{prolific_id}-{ts}'
+    create_entry(chat_id, prolific_id)  # create a new entry in the database
     return chat_id
 
 if "chat_id" not in st.session_state:

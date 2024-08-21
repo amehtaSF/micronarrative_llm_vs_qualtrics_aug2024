@@ -1,12 +1,18 @@
 import boto3
-import dotenv
+
 import os
+import toml
 
-dotenv.load_dotenv()
 
-aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
-aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
-region_name = os.getenv('AWS_DEFAULT_REGION')
+with open('.streamlit/secrets.toml', 'r') as f:
+    secrets = toml.load(f)
+
+# aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+aws_access_key_id = secrets['AWS_ACCESS_KEY_ID']
+# aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+aws_secret_access_key = secrets['AWS_SECRET_ACCESS_KEY']
+# region_name = os.getenv('AWS_DEFAULT_REGION')
+region_name = secrets['AWS_DEFAULT_REGION']
 
 
 dynamodb = boto3.resource(
@@ -20,12 +26,12 @@ dynamodb = boto3.resource(
 table = dynamodb.Table('micronarrative_bot')
 
 
-def create_entry(chat_id):
+def create_entry(chat_id, prolific_id):
     '''Initialize a new entry in the table'''
     table.put_item(
         Item={
             'chat_id': chat_id, # primary key, <prolific id>-<timestamp of start>
-            'prolific_id': '',  # prolific id
+            'prolific_id': prolific_id,  # prolific id
             'interview_chat': [], # list of chat messages e.g. [{'role': 'assistant', 'content': 'hello'}, {'role': 'user', 'content': 'hi'}]
             'conversation_state': '', # phase of streamlit conversation (can help identify early termination of exercise)
             'scenario_1': '',  # AI generated scenario 1 text
@@ -48,7 +54,7 @@ def get_entry(chat_id):
     '''Get an entry from the table'''
     response = table.get_item(
         Key={
-            'chat_id': chat_id
+            'chat_id': str(chat_id)
         }
     )
     item = response['Item']
@@ -58,11 +64,11 @@ def update_str_entry(chat_id, key, value):
     '''Update a string entry in the table'''
     table.update_item(
         Key={
-            'chat_id': chat_id
+            'chat_id': str(chat_id)
         },
         UpdateExpression=f"set {key} = :val",
         ExpressionAttributeValues={
-            ':val': value
+            ':val': str(value)
         },
         ReturnValues="UPDATED_NEW"
     )
@@ -71,7 +77,7 @@ def append_list_entry(chat_id, key, value):
     '''Append a value to a list entry in the table'''
     table.update_item(
         Key={
-            'chat_id': chat_id
+            'chat_id': str(chat_id)
         },
         UpdateExpression=f"set {key} = list_append({key}, :val)",
         ExpressionAttributeValues={
