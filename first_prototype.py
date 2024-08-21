@@ -58,7 +58,7 @@ def make_chat_id():
     if "pid" in st.query_params:
         prolific_id = st.query_params["pid"]
     else:
-        prolific_id = 00000
+        prolific_id = '00000'
     chat_id = f'{prolific_id}-{ts}'
     create_entry(chat_id, prolific_id)  # create a new entry in the database
     return chat_id
