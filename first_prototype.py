@@ -38,9 +38,7 @@ os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
 os.environ["LANGCHAIN_API_KEY"] = st.secrets['LANGCHAIN_API_KEY']
 os.environ["LANGCHAIN_PROJECT"] = st.secrets['LANGCHAIN_PROJECT']
 os.environ["LANGCHAIN_TRACING_V2"] = 'true'
-# os.environ["AWS_ACCESS_KEY_ID"] = st.secrets['AWS_ACCESS_KEY_ID']
-# os.environ["AWS_SECRET_ACCESS_KEY"] = st.secrets['AWS_SECRET_ACCESS_KEY']
-# os.environ["AWS_DEFAULT_REGION"] = st.secrets['AWS_DEFAULT_REGION']
+os.environ["FLASK_API_KEY"] = st.secrets['FLASK_API_KEY']
 
 
 ## simple switch previously used to help debug 
@@ -664,7 +662,7 @@ def finaliseScenario():
                     # st.write(new_response)
 
                 st.markdown(f"Here is the adapted response: \n :orange[{new_response['new_scenario']}]\n\n **what do you think?**")
-
+                update_str_entry(st.session_state["chat_id"], "final_scenario", new_response['new_scenario'])
               
                 c1, c2  = st.columns(2)
 
