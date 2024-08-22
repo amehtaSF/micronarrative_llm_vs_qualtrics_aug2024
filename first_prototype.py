@@ -741,10 +741,12 @@ def markConsent():
     """
     st.session_state['consent'] = True
 
-
+if 'pid' not in st.query_params:
+    st.write("Sorry, there has been an error collecting your Prolific ID. Please contact the researcher for assistance.")
+    st.stop()
 
 ### check we have consent -- if so, run normally 
-if st.session_state['consent']: 
+if st.session_state['consent'] and 'pid' in st.query_params: 
     
     # setting up the right expanders for the start of the flow
     if st.session_state['agentState'] == 'review':
