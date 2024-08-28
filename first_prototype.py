@@ -70,7 +70,11 @@ init_state = {
     "agentState": "start",
     "consent": False,
     "exp_data": True,
-    "llm_model": "gpt-4o"
+    "llm_model": "gpt-4o"#,
+    # "col1_fb": {"score": "", "text": ""},
+    # "col2_fb": {"score": "", "text": ""},
+    # "col3_fb": {"score": "", "text": ""}
+    
 }
 
 for key, value in init_state.items():
@@ -425,12 +429,12 @@ def click_selection_yes(button_num, scenario):
     }
     
     # Save thumbs and optional text to the database
-    update_str_entry(st.session_state["chat_id"], "thumb_1", st.session_state['col1_fb']['score'])
-    update_str_entry(st.session_state["chat_id"], "thumb_2", st.session_state['col2_fb']['score'])
-    update_str_entry(st.session_state["chat_id"], "thumb_3", st.session_state['col3_fb']['score'])
-    update_str_entry(st.session_state["chat_id"], "thumb_1_text", st.session_state['col1_fb']['text'])
-    update_str_entry(st.session_state["chat_id"], "thumb_2_text", st.session_state['col2_fb']['text'])
-    update_str_entry(st.session_state["chat_id"], "thumb_3_text", st.session_state['col3_fb']['text'])
+    update_str_entry(st.session_state["chat_id"], "thumb_1", scenario_dict['fb1'])
+    update_str_entry(st.session_state["chat_id"], "thumb_2", scenario_dict['fb2'])
+    update_str_entry(st.session_state["chat_id"], "thumb_3", scenario_dict['fb3'])
+    # update_str_entry(st.session_state["chat_id"], "thumb_1_text", st.session_state['col1_fb']['text'])
+    # update_str_entry(st.session_state["chat_id"], "thumb_2_text", st.session_state['col2_fb']['text'])
+    # update_str_entry(st.session_state["chat_id"], "thumb_3_text", st.session_state['col3_fb']['text'])
 
     st.session_state.scenario_package = {
             'scenario': scenario,
