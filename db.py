@@ -2,6 +2,7 @@ import boto3
 
 import os
 import toml
+from datetime import datetime
 
 
 with open('.streamlit/secrets.toml', 'r') as f:
@@ -32,6 +33,7 @@ def create_entry(chat_id, prolific_id):
         Item={
             'chat_id': chat_id, # primary key, <prolific id>-<timestamp of start>
             'prolific_id': prolific_id,  # prolific id
+            'created_timestamp': datetime.now().isoformat(),  # timestamp of creation
             'interview_chat': [], # list of chat messages e.g. [{'role': 'assistant', 'content': 'hello'}, {'role': 'user', 'content': 'hi'}]
             'conversation_state': '', # phase of streamlit conversation (can help identify early termination of exercise)
             'scenario_1': '',  # AI generated scenario 1 text
@@ -60,15 +62,15 @@ def get_entry(chat_id):
     item = response['Item']
     return item
 
-def update_str_entry(chat_id, key, value):
-    '''Update a string entry in the table'''
+def update_db_entry(chat_id, key, value):
+    '''Update an entry in the table, allowing for various data types (e.g., dict, list, etc.)'''
     table.update_item(
         Key={
             'chat_id': str(chat_id)
         },
         UpdateExpression=f"set {key} = :val",
         ExpressionAttributeValues={
-            ':val': str(value)
+            ':val': value
         },
         ReturnValues="UPDATED_NEW"
     )
