@@ -212,7 +212,7 @@ def collectFeedback(answer, column_id,  scenario):
     }
     scores = score_mappings[answer['type']]
     
-    update_db_entry(st.session_state["chat_id"], f'rating_{column_id}', answer)
+    # update_db_entry(st.session_state["chat_id"], f'rating_{column_id}', answer)
     
     # Get the score from the selected feedback option's score mapping
     score = scores.get(answer['score'])
