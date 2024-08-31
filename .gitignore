@@ -28,3 +28,4 @@ Thumbs.db
 
 ## ignore any tracing files! 
 ls_*
+.Rproj.user

@@ -1,0 +1,694 @@
+[
+  {
+    "chat_id": "66c42da12cca15dd8d446e9a-20240831004401",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T00:44:01.212374",
+    "editing_chat": [],
+    "final_scenario": "Recently, I've been really upset about something that happened to a friend of mine on social media. A group of people, who didn't even know her, started making horrible comments about her appearance. They said her features and body were disgusting and gross, and they picked on things like her nose and jaw for no reason at all. There wasn't any context or reason behind their cruelty; they just wanted to be mean. Seeing those comments made me feel disgusted and angry on her behalf. It was so emotional trying to help her through it because she got hurt really badly. The worst part was trying to make her feel better about herself, even though none of this was her fault. It was heartbreaking to see her in so much pain.",
+    "interview_chat": [
+      {
+        "content": "Ready!",
+        "role": "human"
+      },
+      {
+        "content": "Great! Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "Finding out how to stay away from it as much as possible, as it can be very distracting",
+        "role": "human"
+      },
+      {
+        "content": "I understand that managing distractions can be really tough. Thanks for sharing that. Now, let's dive into a specific experience you had on social media.\n\n2. What happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "There were people saying that her features and body were disgusting and gross, for zero reason. They would make comments about their nose and jaw",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry to hear that happened. It sounds very hurtful. \n\n3. What's the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "As far as I know, there wasn't any context behind why they said the things that they did. They were a group of friends that just wanted to be mean to someone they didn't know.",
+        "role": "human"
+      },
+      {
+        "content": "That sounds really unfair and unkind. Thank you for sharing that with me. \n\n4. How did the situation make you feel, and how did you react?",
+        "role": "assistant"
+      },
+      {
+        "content": "I felt disgusted and angry for them, and emotional as I try to help them through it.",
+        "role": "human"
+      },
+      {
+        "content": "It must have been really tough to see someone go through that. Your feelings of disgust and anger are completely understandable. \n\n5. What was the worst part of the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "Trying to help them feel better about themselves, but it wasn't their fault. They got hurt really badly.",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "66c42da12cca15dd8d446e9a",
+    "scenario_1": "Recently, I've been really upset about something that happened to a friend of mine on social media. A group of people, who didn't even know her, started making horrible comments about her appearance. They said her features and body were disgusting and gross, and they picked on things like her nose and jaw for no reason at all. There wasn't any context or reason behind their cruelty; they just wanted to be mean. Seeing those comments made me feel disgusted and angry on her behalf. It was so emotional trying to help her through it because she got hurt really badly. The worst part was trying to make her feel better about herself, even though none of this was her fault. It was heartbreaking to see her in so much pain.",
+    "scenario_2": "Recently, I had to help a friend through a really tough time on social media. There were these random people who started making awful comments about her looks, specifically targeting her nose and jaw. It was completely unprovoked and just plain mean. These bullies didn't even know her; they were just a group of friends looking to be cruel for no reason. Seeing those comments made me feel disgusted and angry on her behalf. It was so emotional trying to support her through it all. The worst part was that no matter how much I tried to reassure her that it wasn't her fault and that she was beautiful just the way she is, the damage was already done. She was really hurt by their words, and it was heartbreaking to see.",
+    "scenario_3": "So, there's this messed-up story that really got under my skin. Some random group of so-called 'friends' decided to gang up on this person for absolutely no reason. They started trash-talking about their features, calling their nose and jaw disgusting and gross. Like, seriously, who does that? There was no context, no backstory\u2014just pure meanness from people who didn't even know them. It made me feel so angry and disgusted, but also super emotional because I wanted to help them through it. The worst part? Trying to make them feel better about themselves when it wasn't even their fault. They got hurt really badly, and it just sucks to see someone go through that.",
+    "scenario_choice": "1",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "66946e3054a30a2bf5b1be40-20240830235748",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-30T23:57:48.810122",
+    "editing_chat": [],
+    "final_scenario": "Lately, I've been struggling with staying focused on my work, especially with TikTok being so addictive. I had an important assignment due that same day, but instead of working on it, I found myself doomscrolling on TikTok for hours. It made me feel really irresponsible, like I couldn't control myself. I ended up deleting the app because I felt so guilty and knew it was entirely my fault for procrastinating. It's a tough lesson, but I'm hoping to manage my time better in the future.",
+    "interview_chat": [
+      {
+        "content": "ready",
+        "role": "human"
+      },
+      {
+        "content": "Great! Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "knowing when to stop scrolling",
+        "role": "human"
+      },
+      {
+        "content": "Thanks for sharing that. It sounds like it can be tough to know when to take a break. Let's dive into a specific experience you had on social media.\n\n2. Can you tell me about a particular situation that was challenging for you? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "i had to complete some work but i stayed on tiktok doomscrolling",
+        "role": "human"
+      },
+      {
+        "content": "I understand. It sounds like that was a tough situation for you. \n\n3. What's the context? What else should we know about the situation? For example, was there a deadline or something important you needed to finish?",
+        "role": "assistant"
+      },
+      {
+        "content": "i had untiol that same day",
+        "role": "human"
+      },
+      {
+        "content": "Got it, so you had a deadline that same day. \n\n4. How did the situation make you feel, and how did you react?",
+        "role": "assistant"
+      },
+      {
+        "content": "made me feel irresponsible, i reacted by deleting the app",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. It sounds like it was a difficult moment for you.\n\n5. What was the worst part of the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "knowing it was all my fault",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "66946e3054a30a2bf5b1be40",
+    "scenario_1": "Lately, I've been struggling with managing my time, especially when it comes to social media. Recently, I had some important work to finish, but I found myself stuck on TikTok, endlessly scrolling through videos. I had a deadline that same day, and instead of focusing on my tasks, I kept getting distracted by the app. This made me feel really irresponsible, like I couldn't control my own actions. I felt so bad about it that I decided to delete TikTok from my phone. The worst part was knowing that it was entirely my fault. I realized I need to find a better way to manage my time and avoid these distractions.",
+    "scenario_2": "Lately, I've been struggling with staying focused on my work, especially with TikTok being so addictive. I had an important assignment due that same day, but instead of working on it, I found myself doomscrolling on TikTok for hours. It made me feel really irresponsible, like I couldn't control myself. I ended up deleting the app because I felt so guilty and knew it was entirely my fault for procrastinating. It's a tough lesson, but I'm hoping to manage my time better in the future.",
+    "scenario_3": "So, I had this important work to finish, right? But instead of being responsible and getting it done, I got sucked into the black hole that is TikTok. I was doomscrolling like there was no tomorrow, even though the deadline was literally that same day. I felt like such a screw-up, knowing it was all on me. The guilt hit hard, so I ended up deleting the app. Lesson learned, I guess.",
+    "scenario_choice": "2",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "6671eca6d06784748b51ba5f-20240831003428",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T00:34:28.515915",
+    "editing_chat": [],
+    "final_scenario": "Lately, I've been reflecting on my social media habits and realized I've been spending way too much time on these apps. I found myself endlessly scrolling for hours every day without any real purpose. It's like social media has this addictive grip on me, and it's affecting me negatively. This realization hit me hard; I could've used that time to be more productive, to learn new things, or to spend quality time with friends and family. The worst part is knowing that I can't get back all those hours I wasted just scrolling aimlessly. It's a wake-up call for me to rethink how I use my time and to make better choices moving forward.",
+    "interview_chat": [
+      {
+        "content": "I'm Ready!",
+        "role": "human"
+      },
+      {
+        "content": "Great! Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "I guess it being addictive. Social media can really intervene with my daily life, and I don't get much productive things done because of it.",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. Now, let's talk about a specific experience you had.\n\n2. What happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "Spent too much time on it. Hours on end everyday just endlessly scrolling without a purpose.",
+        "role": "human"
+      },
+      {
+        "content": "I appreciate you sharing that. Let's dive a bit deeper into this experience.\n\n3. What's the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "In simple terms social media is addictive and it's having negative impact on it's users.",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. Let's explore a bit more about your specific experience.\n\n4. How did the situation make you feel, and how did you react?",
+        "role": "assistant"
+      },
+      {
+        "content": "It made me wake up and realize the time wasted on these apps, and I realized that I should've been more productive with my time.",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. It sounds like it was a significant realization for you.\n\n5. What was the worst part of the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "I lost a lot of time I can't get back just scrolling without a purpose.",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "6671eca6d06784748b51ba5f",
+    "scenario_1": "Lately, I've been reflecting on my social media habits and realized I've been spending way too much time on these apps. I found myself endlessly scrolling for hours every day without any real purpose. It's like social media has this addictive grip on me, and it's affecting me negatively. This realization hit me hard; I could've used that time to be more productive, to learn new things, or to spend quality time with friends and family. The worst part is knowing that I can't get back all those hours I wasted just scrolling aimlessly. It's a wake-up call for me to rethink how I use my time and to make better choices moving forward.",
+    "scenario_2": "Lately, I've been feeling pretty down about how much time I waste on social media. I find myself spending hours every day just endlessly scrolling through my feeds without any real purpose. It's like these apps are designed to be addictive, and it's really starting to mess with my head. I had this wake-up moment where I realized just how much time I've lost that I can't get back. I could've been doing something productive or meaningful, but instead, I was just glued to my screen. The worst part is knowing that all that time is gone forever, and I can't help but feel regretful about it.",
+    "scenario_3": "So, I got totally sucked into the social media vortex, right? Like, I was spending hours every day just mindlessly scrolling through my feed with no real reason. It hit me one day how addictive this stuff is and how it's messing with people's lives. I had this 'aha' moment where I realized I was wasting so much time that I could've used for something actually productive. The worst part? All that time I spent scrolling is gone forever. Can't get it back. Lesson learned, I guess.",
+    "scenario_choice": "1",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "65cb734dec18f3e8c82b7caf-20240831000849",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T00:08:49.702324",
+    "editing_chat": [],
+    "final_scenario": "I've been trying to cut down on my Instagram use because it distracts me from my studies. Mostly, I just watch reels and don't feel like replying to my DMs. This means I end up not responding to messages for days at a time. When I finally realize how many DMs have piled up, I try to respond to all of them at once. It makes me feel a little guilty every time because I don't want my friends to think I'm ignoring them on purpose. It's a tough balance to strike between staying focused on my studies and keeping up with my social life.",
+    "interview_chat": [
+      {
+        "content": "i'm ready",
+        "role": "human"
+      },
+      {
+        "content": "Great, thank you for being willing to share. Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": " i  think it's hard to limit my social media usage and also keep up with my relationships",
+        "role": "human"
+      },
+      {
+        "content": "I understand, balancing social media use and maintaining relationships can be really tough. Now, let's talk about a specific experience you had.\n\n2. Can you tell me what happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "I didn't post anything but i usually just watch reels on instagram and then don't feel like replying to my dms",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. Let's get a bit more context to understand the situation better.\n\n3. What's the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "i try not to use instagram as much because it distracts me from my studies. But then when i restrict myself from the app, i end up not replying to dms for days at a time.",
+        "role": "human"
+      },
+      {
+        "content": "That sounds really challenging, trying to balance your studies and social media. Let's talk about how this situation made you feel.\n\n4. How did the situation make you feel, and how did you react?\n",
+        "role": "assistant"
+      },
+      {
+        "content": "it makes me feel a little guilty every time. i try to respond to all the dms when i realize theyve been piling up.",
+        "role": "human"
+      },
+      {
+        "content": "I can understand why that would make you feel guilty. It's tough to manage everything. \n\n5. What was the worst part of the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "the worst part is that it will just keep happening",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "65cb734dec18f3e8c82b7caf",
+    "scenario_1": "Lately, I've been struggling with how I use Instagram. I usually just watch reels because they're fun and entertaining, but then I don't feel like replying to my DMs. I'm trying to limit my time on Instagram because it distracts me from my studies. But when I do this, I end up not replying to messages for days. When I finally notice all the piled-up DMs, I try to respond to everyone. This whole situation makes me feel a bit guilty every time it happens. It's a tough balance to find, and I'm still figuring it out.",
+    "scenario_2": "I've been trying to cut down on my Instagram use because it distracts me from my studies. Mostly, I just watch reels and don't feel like replying to my DMs. This means I end up not responding to messages for days at a time. When I finally realize how many DMs have piled up, I try to respond to all of them at once. It makes me feel a little guilty every time because I don't want my friends to think I'm ignoring them on purpose. It's a tough balance to strike between staying focused on my studies and keeping up with my social life.",
+    "scenario_3": "So, I've got this love-hate thing going on with Instagram. Mostly, I just binge-watch reels and totally ignore my DMs. I'm trying to be a good student and not get sucked into the Instagram vortex, but when I do that, my DMs pile up like crazy. Eventually, I realize I've ghosted everyone and scramble to reply to all the messages. Every time this happens, I feel a bit guilty, like I'm letting people down. It's a vicious cycle, but hey, at least I'm trying to keep my grades up, right?",
+    "scenario_choice": "2",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "654a54a0abb1fef304f60889-20240831010155",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T01:01:55.246629",
+    "editing_chat": [
+      {
+        "content": "I just don't really like the addition of \"it was supposed to be a happy moment\" but it summarizes everything pretty well.",
+        "role": "human"
+      },
+      {
+        "content": "Recently, I had a pretty tough experience on social media that left me feeling really conflicted. My mom posted a picture of us in front of my new college's logo as we were moving in. Things took a turn for the worse when one of my exes reposted the picture with a really hurtful caption, 'Good riddance faggot.' Seeing that made me feel bitter and angry, and I had this urge to get back at them somehow. But after thinking it over, I decided to stay silent because I knew escalating the situation wouldn't help. The hardest part was feeling helpless, like everyone only saw their side of the story because I chose not to respond. Even though it was probably the right decision, it still stung.",
+        "role": "assistant"
+      }
+    ],
+    "final_scenario": "Recently, I had a pretty tough experience on social media that left me feeling really conflicted. My mom posted a picture of us in front of my new college's logo as we were moving in. Things took a turn for the worse when one of my exes reposted the picture with a really hurtful caption, 'Good riddance faggot.' Seeing that made me feel bitter and angry, and I had this urge to get back at them somehow. But after thinking it over, I decided to stay silent because I knew escalating the situation wouldn't help. The hardest part was feeling helpless, like everyone only saw their side of the story because I chose not to respond. Even though it was probably the right decision, it still stung.",
+    "interview_chat": [
+      {
+        "content": "Im ready",
+        "role": "human"
+      },
+      {
+        "content": "Great, thank you for being willing to share. Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "Honestly, the amount of time I feel I waste on it. I think my time would be much better used on other things than social media, as it's not really nurturing my brain in any way.",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. It sounds like managing your time on social media is really challenging. Now, let's talk about a specific experience you had.\n\n2. Can you tell me about a particular situation that was difficult for you? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "A specific instance which was difficult for me was seeing that a picture my mom posted with me on social media was reposted by one of my exes with the caption \"Good riddance faggot\" ",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry to hear that happened to you. That sounds incredibly hurtful. \n\n3. Can you tell me more about the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "I was leaving for college and my mom posted a picture with me infront of the logo of my school while we were moving in. ",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that context. It helps to understand the situation better.\n\n4. How did the situation make you feel, and how did you react?",
+        "role": "assistant"
+      },
+      {
+        "content": "I was pretty bitter, and I felt like I should take revenge in some way, but in the end, I did nothing because I knew there was no reason to make more of that situation.",
+        "role": "human"
+      },
+      {
+        "content": "It's completely understandable to feel bitter and upset in that situation. It's really mature of you to decide not to escalate things. \n\n5. What was the worst part of the situation for you?",
+        "role": "assistant"
+      },
+      {
+        "content": "The fact that I felt a bit helpless- like people could only see one side of everything because I decided to stay silent, though it was definitely the better move.",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "654a54a0abb1fef304f60889",
+    "scenario_1": "Recently, I had a pretty tough experience on social media that left me feeling really conflicted. My mom posted a picture of us in front of my new college's logo as we were moving in. It was supposed to be a happy moment, but things took a turn for the worse when one of my exes reposted the picture with a really hurtful caption, 'Good riddance faggot.' Seeing that made me feel bitter and angry, and I had this urge to get back at them somehow. But after thinking it over, I decided to stay silent because I knew escalating the situation wouldn't help. The hardest part was feeling helpless, like everyone only saw their side of the story because I chose not to respond. Even though it was probably the right decision, it still stung.",
+    "scenario_2": "So, something pretty rough happened recently. My mom posted a picture of us in front of my new college logo while we were moving in. It was supposed to be a happy moment, but then one of my exes saw it and decided to repost it with the caption 'Good riddance faggot.' That really stung. I felt bitter and wanted to get back at them somehow, but I knew it wouldn't help anything. The worst part was feeling helpless, like everyone would just see their side of the story because I chose to stay quiet. Even though it was probably the right move, it still sucked.",
+    "scenario_3": "So, here's the tea. My mom, being all proud and stuff, posted this pic of us in front of my new college logo as we were moving in. Sweet, right? Well, one of my exes decided to be a total jerk and reposted it with the caption 'Good riddance faggot.' Like, seriously? I was super bitter and wanted to clap back so bad, but I knew it wasn't worth the drama. The worst part? Feeling like everyone only saw his side because I chose to stay quiet. It sucked, but I knew keeping my cool was the smarter move.",
+    "scenario_choice": "1",
+    "scenario_rating": "Pretty good but I'd like to tweak it",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": {
+      "score": "\ud83d\udc4e",
+      "text": "assuming gender of my ex, but the \"slanguage\" doesnt read like a real humans would",
+      "type": "thumbs"
+    },
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "66ce40184e4cc8f8f2d00c6c-20240830235941",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-30T23:59:41.254624",
+    "editing_chat": [],
+    "final_scenario": "Recently, I've been struggling with something that happened on social media. Someone posted a really unflattering picture of me, and it was clear they did it just to make fun of me. This made me feel incredibly powerless, like I had no control over how people saw me. I tried to ignore the situation, hoping it would just go away. But the worst part was feeling like I was being bullied. It was a tough experience, and it made me question how safe I really am online.",
+    "interview_chat": [
+      {
+        "content": "I'm ready!",
+        "role": "human"
+      },
+      {
+        "content": "Great, thank you for being ready to share. \n\nLet's start with a general question: \n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "finding content that is catered towards me",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. It sounds like finding content that really resonates with you is a challenge. \n\nNow, let's dive into a specific experience you've had. \n\n2. Can you tell me about a particular situation that was difficult for you on social media? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "Someone posted a bad picture of me on social media",
+        "role": "human"
+      },
+      {
+        "content": "I'm sorry to hear that happened. \n\n3. Can you share a bit more about the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "They were using a bad photo to make fun of me",
+        "role": "human"
+      },
+      {
+        "content": "That sounds really tough. \n\n4. How did the situation make you feel, and how did you react?\n",
+        "role": "assistant"
+      },
+      {
+        "content": "It made me feel powerless. I ignored the situation",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry you had to go through that. Feeling powerless must have been really difficult.\n\n5. What was the worst part of the situation for you?",
+        "role": "assistant"
+      },
+      {
+        "content": "Feeling as though I was bullied",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "66ce40184e4cc8f8f2d00c6c",
+    "scenario_1": "Recently, I've been struggling with something that happened on social media. Someone posted a really unflattering picture of me, and it was clear they did it just to make fun of me. This made me feel incredibly powerless, like I had no control over how people saw me. I tried to ignore the situation, hoping it would just go away. But the worst part was feeling like I was being bullied. It was a tough experience, and it made me question how safe I really am online.",
+    "scenario_2": "Lately, I've been feeling pretty down about something that happened on social media. Someone decided to post a really unflattering picture of me, and it was clear they did it to make fun of me. It felt like they were trying to embarrass me in front of everyone. Seeing that post made me feel completely powerless, like there was nothing I could do to stop it. I tried to ignore it and pretend it didn't bother me, but deep down, it really hurt. The worst part was feeling like I was being bullied and not knowing how to handle it. It was a tough experience that left me feeling pretty low.",
+    "scenario_3": "So, here's the deal. Someone decided to post a really unflattering picture of me on social media, just to take the mick. They thought it would be funny to use a bad photo to make fun of me. Honestly, it made me feel totally powerless, like I couldn't do anything about it. I tried to ignore it, but the worst part was feeling like I was being bullied. Not cool at all.",
+    "scenario_choice": "1",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "66a1a7b0269b3a1ae9ea1a1f-20240831001613",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T00:16:13.057990",
+    "editing_chat": [],
+    "final_scenario": "So, the other day I was scrolling through social media and came across this really disturbing post. Someone had used AI to recreate an old antisemitic cartoon, which originally showed a Jewish businessman as an octopus wrapping its tentacles around the world. But in this AI version, they replaced the Jewish person with an Arab. Given the ongoing genocide of the Palestinian people by the Israeli government, and the support they get from countries like the US, UK, France, and Germany, this post was especially sickening. I felt disgusted and immediately reported it. It was just so gross to see such hateful content being spread around.",
+    "interview_chat": [
+      {
+        "content": "ready",
+        "role": "human"
+      },
+      {
+        "content": "Great! Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "The most challenging thing about my current social media use is the exposure to all the negative things happening in the world. From the genocides in Palestine, Sudan, and the Congo, to the blatant racism which I see pushed by the owner of X",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. It sounds really tough. Let's talk about a specific experience you had on social media.\n\n2. What happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "Earlier today, I witnessed a Zionist post an ai recreation of an old antisemetic cartoon which depicted a Jewish businessman as an octopus, wrapping the world around his tentacles. The AI recreation had all the same details, except what was formally a depiction of a Jewish person was instead replaced by an Arab. ",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry you had to see that. Let's get a bit more context to understand the situation better.\n\n3. What's the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "The context was the ongoing genocide of the Palestinian people by the Israeli government with the support of the United States, Great Britain, France, Germany, and other western powers",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for providing that context. I can see how that would be deeply upsetting. \n\n4. How did the situation make you feel, and how did you react?\n",
+        "role": "assistant"
+      },
+      {
+        "content": "Disgusted",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry to hear that. It sounds like it was a very distressing experience. \n\nCan you tell me a bit more about how you reacted to seeing that post? Did you do anything in response, like report it, comment, or talk to someone about it?",
+        "role": "assistant"
+      },
+      {
+        "content": "I reported it",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. Reporting it was a responsible action. \n\n5. What was the worst part of the situation for you?",
+        "role": "assistant"
+      },
+      {
+        "content": "The racism",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "66a1a7b0269b3a1ae9ea1a1f",
+    "scenario_1": "Recently, I came across something really disturbing on social media. I saw a post from a Zionist account that used AI to recreate an old antisemitic cartoon. The original cartoon showed a Jewish businessman as an octopus, wrapping the world in its tentacles. In this AI recreation, the Jewish person was replaced by an Arab. This was really upsetting, especially considering the ongoing genocide of the Palestinian people by the Israeli government, which is supported by countries like the United States, Great Britain, France, Germany, and other western powers. I felt disgusted by what I saw and immediately reported the post. It was one of those moments that really made me question humanity.",
+    "scenario_2": "So, the other day I was scrolling through social media and came across this really disturbing post. Someone had used AI to recreate an old antisemitic cartoon, which originally showed a Jewish businessman as an octopus wrapping its tentacles around the world. But in this AI version, they replaced the Jewish person with an Arab. Given the ongoing genocide of the Palestinian people by the Israeli government, and the support they get from countries like the US, UK, France, and Germany, this post was especially sickening. I felt disgusted and immediately reported it. It was just so gross to see such hateful content being spread around.",
+    "scenario_3": "So, I was scrolling through my feed and stumbled upon this really messed up post. Some Zionist dude used AI to recreate this super old, antisemitic cartoon. It used to show a Jewish businessman as an octopus, wrapping his tentacles around the world. But get this, the AI version swapped the Jewish person for an Arab. Like, seriously? With everything going on right now\u2014the genocide of Palestinians by the Israeli government, backed by the US, UK, France, Germany, and other western powers\u2014this was just beyond disgusting. I couldn't just sit there and do nothing, so I reported it. But man, the whole thing left me feeling absolutely grossed out.",
+    "scenario_choice": "2",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "667af6df6d1e576158ef7e96-20240830234827",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-30T23:48:27.361424",
+    "editing_chat": [],
+    "final_scenario": "So, like, I was trying to think back on any tough times I've had on social media, but honestly, nothing really comes to mind. My memory's kinda fuzzy, so maybe there was something, but I just can't recall it. I guess that's a good thing, right? No drama, no stress. So yeah, no bad vibes to report here. Just smooth sailing in the social media sea.",
+    "interview_chat": [
+      {
+        "content": "Sounds good",
+        "role": "human"
+      },
+      {
+        "content": "Great! Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "I don't find anything challenging",
+        "role": "human"
+      },
+      {
+        "content": "That's good to hear that you don't find anything challenging right now. However, sometimes even small things can be worth talking about. \n\nCan you think of a specific time when you had a difficult experience on social media? \n\n2. What happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "I really can't recall anything difficult on social media and my memory isn't that good",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "667af6df6d1e576158ef7e96",
+    "scenario_1": "It's interesting to reflect on my social media experiences, but honestly, I can't recall any particularly difficult moments. My memory isn't the best, so maybe that's why nothing stands out. I don't remember feeling any strong emotions or reacting in any significant way to anything on social media. There hasn't been a 'worst part' for me because I just don't have any challenging experiences that come to mind.",
+    "scenario_2": "Honestly, I can't remember any tough experiences I've had on social media. My memory isn't that great, so nothing really stands out. I don't recall feeling any particular way or having any strong reactions to anything online. There wasn't really a worst part because, as far as I can remember, there wasn't any difficult situation to begin with.",
+    "scenario_3": "So, like, I was trying to think back on any tough times I've had on social media, but honestly, nothing really comes to mind. My memory's kinda fuzzy, so maybe there was something, but I just can't recall it. I guess that's a good thing, right? No drama, no stress. So yeah, no bad vibes to report here. Just smooth sailing in the social media sea.",
+    "scenario_choice": "3",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": {
+      "score": "\ud83d\udc4d",
+      "text": null,
+      "type": "thumbs"
+    },
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "66ce40184e4cc8f8f2d00c6c-20240831004330",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T00:43:30.187650",
+    "editing_chat": [],
+    "final_scenario": "",
+    "interview_chat": [],
+    "prolific_id": "66ce40184e4cc8f8f2d00c6c",
+    "scenario_1": "",
+    "scenario_2": "",
+    "scenario_3": "",
+    "scenario_choice": "",
+    "scenario_rating": "",
+    "thumb_1": "",
+    "thumb_1_text": "",
+    "thumb_2": "",
+    "thumb_2_text": "",
+    "thumb_3": "",
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "66d07f85692c6c5865ce330b-20240830233822",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-30T23:38:22.661149",
+    "editing_chat": [],
+    "final_scenario": "Lately, I've been feeling pretty down about myself because of what I see on Snapchat. Every time I scroll through, it feels like I'm bombarded with images of half-naked girls or OnlyFans models. This isn't something new; it's been happening for a while now. These girls often have cosmetic procedures done, and they set such unrealistic standards for beauty. It's been messing with my self-image ever since I was younger. Seeing these posts makes me feel like I'm not enough, and the worst part is that it just keeps happening. It's like a constant reminder that I don't measure up to these impossible standards.",
+    "interview_chat": [
+      {
+        "content": "I'm ready",
+        "role": "human"
+      },
+      {
+        "content": "Great! Thanks for being willing to share. Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "There are many challenges with social media. I'd have to say that the increase in bodies being oversexualized has been a personal challenge for me because it makes me insecure about myself.",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry to hear that you're feeling this way. It sounds tough. Let's talk about a specific experience you had related to this challenge.\n\n2. What happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "I'll scroll on snapchat and I'll see half naked girls all the time or only fans girls and it makes me insecure about myself",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. I can understand how that would be really difficult. \n\n3. What's the context? What else should we know about the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "It's just a phenomenon that's been going on for quite some time. There are times where you see girls who get cosmetic procedures done on their face or body, they are just unrealistic expectations that has been affecting my self image since i was young",
+        "role": "human"
+      },
+      {
+        "content": "I appreciate you providing more context. It sounds like this has been affecting you for a while. \n\n4. How did the situation make you feel, and how did you react?\n",
+        "role": "assistant"
+      },
+      {
+        "content": "It makes me feel like I'm not enough",
+        "role": "human"
+      },
+      {
+        "content": "I'm really sorry to hear that you're feeling this way. It's important to acknowledge those feelings. How did you react when you felt like you weren't enough? Did you talk to someone about it, or did you try to cope in another way?",
+        "role": "assistant"
+      },
+      {
+        "content": "I just try to remind myself that social media isn't real life so that helos",
+        "role": "human"
+      },
+      {
+        "content": "I'm glad to hear that you have a strategy to help remind yourself that social media isn't real life. It sounds like you're trying to find ways to cope with these feelings, which is really important.\n\n5. What was the worst part of the situation?",
+        "role": "assistant"
+      },
+      {
+        "content": "The fact that it keeps happening",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "66d07f85692c6c5865ce330b",
+    "scenario_1": "Lately, I've been feeling really conflicted about using Snapchat. Whenever I scroll through my feed, I often come across images of half-naked girls or promotions for OnlyFans accounts. This isn't a new thing; it's been happening for quite a while now. What makes it worse is seeing girls who have had cosmetic procedures done on their faces or bodies. These images set such unrealistic expectations and have been messing with my self-image since I was young. Every time I see these posts, it makes me feel like I'm not enough. The hardest part is that it keeps happening, and it feels like there's no escape from it.",
+    "scenario_2": "Lately, I've been feeling pretty down about myself because of what I see on Snapchat. Every time I scroll through, it feels like I'm bombarded with images of half-naked girls or OnlyFans models. This isn't something new; it's been happening for a while now. These girls often have cosmetic procedures done, and they set such unrealistic standards for beauty. It's been messing with my self-image ever since I was younger. Seeing these posts makes me feel like I'm not enough, and the worst part is that it just keeps happening. It's like a constant reminder that I don't measure up to these impossible standards.",
+    "scenario_3": "So, here's the deal. I'm scrolling through Snapchat, right? And it's like, every other snap is some half-naked girl or an OnlyFans promo. This isn't just a one-time thing; it's been happening forever. These girls have all these cosmetic procedures done, and it's like they're setting these totally unrealistic standards. It's been messing with my self-image since I was a kid. Every time I see it, I feel like I'm not enough. And the worst part? It just keeps happening, over and over. It's like, can we get a break already?",
+    "scenario_choice": "2",
+    "scenario_rating": "Ready as is!",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "66ce40184e4cc8f8f2d00c6c-20240831003220",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-31T00:32:20.321519",
+    "editing_chat": [],
+    "final_scenario": "",
+    "interview_chat": [],
+    "prolific_id": "66ce40184e4cc8f8f2d00c6c",
+    "scenario_1": "",
+    "scenario_2": "",
+    "scenario_3": "",
+    "scenario_choice": "",
+    "scenario_rating": "",
+    "thumb_1": "",
+    "thumb_1_text": "",
+    "thumb_2": "",
+    "thumb_2_text": "",
+    "thumb_3": "",
+    "thumb_3_text": ""
+  },
+  {
+    "chat_id": "6658b7efa5b7d3d99e5c037d-20240830234729",
+    "conversation_state": "",
+    "created_timestamp": "2024-08-30T23:47:29.841728",
+    "editing_chat": [
+      {
+        "content": "it's a little wordy, it feels like an academic paper more than just a thought. ",
+        "role": "human"
+      },
+      {
+        "content": "I've noticed that I spend a lot of time mindlessly scrolling through social media. The content is so easy to consume that I get sucked in without realizing it. It's not just me; a lot of people deal with this, even if they don't think they're addicted. When I catch myself doing it, I try to close the app and do something else, but it's hard not to go back. The worst part is the guilt I feel afterward, thinking about all the productive things I could have done instead. It's a frustrating habit I'm trying to break.",
+        "role": "assistant"
+      }
+    ],
+    "final_scenario": "I've noticed that I spend a lot of time mindlessly scrolling through social media. The content is so easy to consume that I get sucked in without realizing it. It's not just me; a lot of people deal with this, even if they don't think they're addicted. When I catch myself doing it, I try to close the app and do something else, but it's hard not to go back. The worst part is the guilt I feel afterward, thinking about all the productive things I could have done instead. It's a frustrating habit I'm trying to break.",
+    "interview_chat": [
+      {
+        "content": "ready",
+        "role": "human"
+      },
+      {
+        "content": "Great, thank you for being willing to share. Let's start with a general question:\n\n1. What do you find most challenging about your current social media use?",
+        "role": "assistant"
+      },
+      {
+        "content": "maybe when to stop scrolling? i can lose track of time really easily when im looking at social media",
+        "role": "human"
+      },
+      {
+        "content": "Thank you for sharing that. It sounds like managing time on social media can be tough. Now, let's talk about a specific experience you had.\n\n2. Can you tell me about a particular situation that was challenging? What happened? Specifically, what was said, posted, or done?",
+        "role": "assistant"
+      },
+      {
+        "content": "there's nothing specifically on social media that is challenging. it's more that the content doesn't have any substance to it, and so it's easy to digest and to keep scrolling.",
+        "role": "human"
+      },
+      {
+        "content": "I understand. It sounds like the endless stream of content can be overwhelming. Let's explore this a bit more.\n\n3. What's the context? What else should we know about the situation?\n",
+        "role": "assistant"
+      },
+      {
+        "content": "there isn't really any context, i think this applies to a lot of people. even if you dont have a  social media \"addiction\" its very easy for anyone to have this bad habit",
+        "role": "human"
+      }
+    ],
+    "prolific_id": "6658b7efa5b7d3d99e5c037d",
+    "scenario_1": "Lately, I've been noticing a pattern in my social media habits that's been bothering me. The content I come across is often so superficial and easy to consume that I find myself endlessly scrolling without even realizing it. This isn't just something that happens to me; it's a common issue that many people face, even if they don't consider themselves addicted to social media. When I catch myself in this cycle, I usually try to close the app and focus on something else, but it's tough not to get drawn back in. The worst part of this experience is the guilt I feel afterward. I can't help but think about all the productive things I could have done instead of wasting time on my phone. It's a frustrating habit that I'm trying to break.",
+    "scenario_2": "Lately, I've been noticing how easy it is to get sucked into mindless scrolling on social media. The content is so superficial that it's effortless to just keep scrolling without even thinking about it. This isn't just a problem for people who are addicted to social media; it's something that can happen to anyone. Even if you don't consider yourself hooked, it's still easy to fall into this bad habit. When I catch myself doing this, I usually try to close the app and find something else to do. But honestly, it's tough not to go back to it later. The worst part is the guilt that comes with it. I end up feeling like I wasted my time and could have done something way more productive. It's a frustrating cycle.",
+    "scenario_3": "So, here's the deal. Social media these days is like a bag of chips \u2013 no substance, just easy to munch on and keep scrolling. It's not just me; loads of people get sucked into this black hole, even if they're not full-blown addicts. I try to be good and shut the app down, maybe go do something actually useful, but it's like a magnet pulling me back. The worst part? That gnawing guilt, knowing I could've done something way more productive with my time. Ugh, it's a vicious cycle.",
+    "scenario_choice": "1",
+    "scenario_rating": "Needs some edits",
+    "thumb_1": null,
+    "thumb_1_text": "",
+    "thumb_2": null,
+    "thumb_2_text": "",
+    "thumb_3": null,
+    "thumb_3_text": ""
+  }
+]

@@ -805,7 +805,7 @@ else:
     consent_message = st.container()
     with consent_message:
         st.markdown(''' 
-                    ## Welcome to our teenbot-prototype.
+                    ## Welcome to our story collection bot.
 
                     \n In this task you’re going to engage with a prototype chatbot that asks you to recall experiences using social media. 
                     
