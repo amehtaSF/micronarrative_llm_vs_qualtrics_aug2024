@@ -12,6 +12,7 @@ from langsmith.run_helpers import get_current_run_tree
 from streamlit_feedback import streamlit_feedback
 import boto3
 from datetime import datetime
+import random
 
 from db import create_entry, get_entry, update_db_entry, append_list_entry
 
@@ -269,10 +270,12 @@ def summariseData(testing = False):
     # connect the prompt with the llm call, and then ensure output is json with our new parser
     chain = prompt_template | chat | json_parser
 
-    ## pick the prompt we want to use 
-    prompt_1 = prompts['prompt_1']
-    prompt_2 = prompts['prompt_2']
-    prompt_3 = prompts['prompt_3']
+    # pick the prompt we want to use (counterbalance order)
+    prompt_type_1, prompt_type_2, prompt_type_3 = random.sample(['formal', 'sibling', 'friend'], 3)
+    prompt_1, prompt_2, prompt_3 = prompts[prompt_type_1], prompts[prompt_type_2], prompts[prompt_type_3]
+    update_db_entry(st.session_state["chat_id"], "prompt_type_1", prompt_1)
+    update_db_entry(st.session_state["chat_id"], "prompt_type_2", prompt_2)
+    update_db_entry(st.session_state["chat_id"], "prompt_type_3", prompt_3)
     
     end_prompt = end_prompt_core
 

@@ -33,59 +33,49 @@ Read data
 ---
 ```{r}
 filepath <- sprintf("%s/micronarrative_llm_vs_qualtrics_aug2024.csv", recent_date_dir(here("data/raw")))
-df_file <- read_survey(here(filepath))
-```
-
-Make blank codebook
----
-```{r}
-codebook_filepath <- ""
-codebook_vars_blank <- tibble(old_col_name = names(df_file),
-                              new_col_name = "")
-codebook_values_blank <- tibble(var_regex = "",
-                                old_value = "",
-                                new_value = "")
-writexl::write_xlsx(list(variables = codebook_vars_blank,
-                         values = codebook_values_blank),
-                    here(codebook_filepath))
+df_file <- read_survey(here(filepath)) 
 
 ```
-
 
 
 Read codebooks
 ---
 ```{r}
+codebook_filepath <- "data/micronarrative_llm_vs_qualtrics_aug2024_codebook.xlsx"
 codebook_vars <- readxl::read_excel(here(codebook_filepath), sheet="variables")
-codebook_values <- readxl::read_excel(here(codebook_filepath), sheet="values")
+
+# codebook_values <- readxl::read_excel(here(codebook_filepath), sheet="values")
 ```
 
 Process data
 ---
 ```{r}
-df_raw <- df_file %>% 
+df_raw <- df_file %>%
+  janitor::clean_names() %>% 
+  mutate(start_date = ymd_hms(start_date),
+         end_date = ymd_hms(end_date)) %>% 
+  # -- remove rows without prolific pid -- #
+  filter(nchar(pid) == 24) %>%  
   # -- remove qualtrics erroneous header -- #
   # slice(-1) %>% 
-  # -- remove useless columns -- #
-  select(-IPAddress, -RecipientFirstName, -RecipientLastName, -RecipientEmail,
-         -ExternalReference, -LocationLatitude, -LocationLongitude,
-         -DistributionChannel, -UserLanguage) %>% 
-  rename(duration = `Duration (in seconds)`) %>% 
   # -- add raw data file name -- #
   mutate(rawDataFile = filepath) %>% 
   # -- drop columns with all NA -- #
   select(-where(~all(is.na(.)))) %>% 
   # -- rename columns -- #
-  codebook_renamer(names_from=codebook_vars$old_col_name,
-                   names_to=codebook_vars$new_col_name)
+  codebook_renamer(names_from=codebook_vars$old_name,
+                   names_to=codebook_vars$new_name) 
 ```
 
 ```{r}
-df_recoded <- df_raw %>% 
+df_recoded <- df_raw %>%
 	# -- recode variables -- #
 	codebook_recoder(var_regex=codebook_values$var_regex,
 	                 values_from=codebook_values$old_value,
-	                 values_to=codebook_values$new_value)
+	                 values_to=codebook_values$new_value) %>% 
+  # -- coding it so higher values refer to bot preference -- #
+  mutate_at(vars(ends_with("compare")), ~ifelse(left_side == "bot", .*-1, .))
+  
 ```
 
 
@@ -109,20 +99,14 @@ df_proc %>%
 ```
 
 
-```{r}
-df <- df_file %>% 
-  filter(nchar(pid) >= 20) 
-
-
-```
-
 Export
 ===
 ```{r}
-filepath_output <- paste0("data/proc/", Sys.Date(), "/_proc.csv")
+filepath_output <- paste0("data/proc/micronarrative_llm_vs_qualtrics_aug2024_proc.csv")
 df_proc %>% 
   write_csv(here(filepath_output))
 ```
+
 
 
 

@@ -19,6 +19,7 @@ library(rsurveyutils)
 library(here)
 library(tidyverse)
 library(ggthemr)
+library(sjPlot)
 # theme_set(theme_bw())
 ggthemr("fresh")
 ```
@@ -31,22 +32,18 @@ library(tidylog)
 Preprocessing
 ===
 
-Functions
----
-```{r}
-```
 
 Read data
 ---
 ```{r, message=FALSE}
-filepath <- ""
+filepath <- "data/proc/micronarrative_llm_vs_qualtrics_aug2024_proc.csv"
 df_raw <- read_csv(here(filepath))
 ```
 
 Process data
 ---
 ```{r, message=FALSE}
-df_proc <- df_raw 
+df_survey <- df_raw 
 ```
 
 
@@ -55,6 +52,296 @@ df_proc <- df_raw
 # ----- Run all chunks above -----#
 ```
 
+
+Helpful in articulating
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, helpArticulate_bot, helpArticulate_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "helpArticulate_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+  
+```
+> bot appears to be more helpful in articulating than form
+
+
+Difficult to respond
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, difficult_bot, difficult_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "difficult_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> the form is much more difficult than the bot
+
+
+Valuable for youth
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, valuable_bot, valuable_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "valuable_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+
+```
+> bot might be more helpful, but not reliable effect. mean is high though.
+
+
+Feeling change
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, feelingChange_bot, feelingChange_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "feelingChange_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> not really a difference between the two and neither are that helpful
+
+
+Accurate objective circumstances
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, acc_obj_bot, acc_obj_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "acc_obj_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> not much difference
+
+Accurate feelings
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, acc_feel_bot, acc_feel_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "acc_feel_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> not particularly different
+
+Others would understand
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, otherUnderstand_bot, otherUnderstand_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "otherUnderstand_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> others would understand much better with the bot's help
+
+Ease of capturing what you wanted
+===
+```{r}
+
+df_survey %>% 
+  ggplot(aes(x = easeCapture_compare)) + 
+  geom_histogram()
+
+
+df_survey %>% 
+  summarize(
+    mean = mean(easeCapture_compare, na.rm = TRUE),
+    sd = sd(easeCapture_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(easeCapture_compare > 0, na.rm = TRUE),
+  )
+```
+> Not much difference
+
+
+Appropriate for youth
+===
+```{r}
+df_survey %>% 
+  ggplot(aes(x = forYouth_compare)) +
+  geom_histogram()
+
+df_survey %>% 
+  summarize(
+    mean = mean(forYouth_compare, na.rm = TRUE),
+    sd = sd(forYouth_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(forYouth_compare > 0, na.rm = TRUE),
+  )
+```
+> 
+
+
+Sense making
+===
+```{r}
+df_survey %>% 
+  ggplot(aes(x = senseMaking_compare)) +
+  geom_histogram()
+
+df_survey %>% 
+  summarize(
+    mean = mean(senseMaking_compare, na.rm = TRUE),
+    sd = sd(senseMaking_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(senseMaking_compare > 0, na.rm = TRUE),
+  )
+```
+> Meh maybe slightly better for bot
+
+
+Captured your voice
+===
+```{r}
+
+df_survey %>% 
+  ggplot(aes(x = captureVoice_compare)) +
+  geom_histogram()
+
+df_survey %>% 
+  summarize(
+    mean = mean(captureVoice_compare, na.rm = TRUE),
+    sd = sd(captureVoice_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(captureVoice_compare > 0, na.rm = TRUE),
+  )
+```
+> Hard to say
+
+
+
+Helped address problem
+===
+```{r}
+
+df_survey %>% 
+  ggplot(aes(x = probSolve_compare)) +
+  geom_histogram()
+
+df_survey %>% 
+  summarize(
+    mean = mean(probSolve_compare, na.rm = TRUE),
+    sd = sd(probSolve_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(probSolve_compare > 0, na.rm = TRUE),
+  )
+```
+> Not much
+
+
+Privacy concerns
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, privacy_bot, privacy_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "privacy_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> more concerns about bot
+
+Recommend to friend
+===
+```{r}
+d <- df_survey %>% 
+  select(pid, recommend_bot, recommend_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "recommend_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
+
+d %>% 
+  lm(value ~ method, data = .) %>%
+  tab_model()
+```
+> Would recommend bot more 
 
 
 
