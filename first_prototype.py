@@ -278,9 +278,9 @@ def summariseData(testing = False):
     # pick the prompt we want to use (counterbalance order)
     prompt_type_1, prompt_type_2, prompt_type_3 = random.sample(['formal', 'youngsib', 'friend'], 3)
     prompt_1, prompt_2, prompt_3 = prompts[prompt_type_1], prompts[prompt_type_2], prompts[prompt_type_3]
-    update_db_entry(st.session_state["chat_id"], "prompt_type_1", prompt_1)
-    update_db_entry(st.session_state["chat_id"], "prompt_type_2", prompt_2)
-    update_db_entry(st.session_state["chat_id"], "prompt_type_3", prompt_3)
+    update_db_entry(st.session_state["chat_id"], "prompt_type_1", prompt_type_1)
+    update_db_entry(st.session_state["chat_id"], "prompt_type_2", prompt_type_2)
+    update_db_entry(st.session_state["chat_id"], "prompt_type_3", prompt_type_3)
     
     
     
