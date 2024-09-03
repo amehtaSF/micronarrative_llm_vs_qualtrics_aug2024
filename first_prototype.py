@@ -503,6 +503,9 @@ def scenario_selection (popover, button_num, scenario):
 
         scenario_rating = st.select_slider("Judge_scenario", label_visibility= 'hidden', key = slider_name, options = sliderOptions, on_change= sliderChange, args = (slider_name,))
         # update_db_entry(st.session_state["chat_id"], "scenario_rating", scenario_rating)
+        if scenario_rating == "Ready as is!":
+            update_db_entry(st.session_state["chat_id"], "final_scenario", scenario)
+            
         
 
         c1, c2 = st.columns(2)

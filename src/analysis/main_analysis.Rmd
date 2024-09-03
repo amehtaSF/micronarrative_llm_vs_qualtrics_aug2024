@@ -17,8 +17,10 @@ Initialization
 rm(list=ls())
 library(rsurveyutils)
 library(here)
+library(lmerTest)
 library(tidyverse)
 library(ggthemr)
+library(brms)
 library(sjPlot)
 # theme_set(theme_bw())
 ggthemr("fresh")
@@ -69,9 +71,28 @@ d %>%
   stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|pid), data = .) %>%
   tab_model()
-  
+
+fit_articulate <-  d %>% 
+  brm(value ~ method + (method|pid),
+      data = .,
+      family = gaussian(),
+      # control = list(
+      #   adapt_delta = 0.90, 
+      #   # max_treedepth = 15
+      #   ),
+      cores = 4,
+      chains = 4,
+      iter = 2000,
+      warmup = 500,
+      file = "models/fit_articulate.rds",
+      file_refit = "on_change"
+      )
+pp_check(fit_articulate)
+
+summary(fit_articulate)
+
 ```
 > bot appears to be more helpful in articulating than form
 
@@ -92,7 +113,7 @@ d %>%
   stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
 > the form is much more difficult than the bot
