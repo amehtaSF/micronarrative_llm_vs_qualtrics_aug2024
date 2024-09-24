@@ -32,8 +32,8 @@ ls_*
 
 **/*.pdf
 **/*.docx
-**/*.csv
-data/
-data/raw/prolific_chatbot_data.json
+# **/*.csv
+# data/
+# data/raw/prolific_chatbot_data.json
 **/*.rds
 .RData
