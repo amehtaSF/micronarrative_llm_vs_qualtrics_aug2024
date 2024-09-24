@@ -82,8 +82,20 @@ df_recoded <- df_raw %>%
 ```{r}
 df_proc <- df_recoded %>% 
   # -- remove columns with all NA -- #
-  select_if(~!all(is.na(.)))
+  select_if(~!all(is.na(.))) %>% 
+  filter(age <= 20) %>% 
+  filter(progress == 100 & finished == TRUE) %>% 
+  filter(use_survey == "Yes") %>%
+  filter(use_survey_form == "Yes, I see my narrative and it is a valid challenging social media experience.") %>%
+  filter(use_survey_bot == "Yes, I see my narrative and it is a valid challenging social media experience.") %>%
+  filter(`ac_90-100` >= 90 & `ac_90-100` <= 100) %>% 
+  filter(`ac_65-70` >= 65 & `ac_65-70` <= 70) %>% 
+  filter(chatbot_summary != "" & !is.na(chatbot_summary)) %>% 
+  select(-qualtrics_summary_157, -ip_address) 
 
+# df_recoded %>% 
+#   filter(chatbot_summary == "" | is.na(chatbot_summary)) %>%
+#   view
 
 # -- Check for duplicates -- #
 df_proc %>% 
@@ -98,6 +110,59 @@ df_proc %>%
 # ----- Run all chunks above -----#
 ```
 
+Prolific crediting
+===
+```{r}
+df_proc %>% 
+  pull(pid) %>% 
+  cat(sep="\n")
+```
+
+```{r}
+id = "66912d22f9cbca6c54eaeddf"
+df_file %>% 
+  filter(pid == id) %>%
+  view
+
+df_file %>% 
+  filter(pid == id) %>% 
+  select(Finished, Progress) 
+
+id %in% df_proc$pid
+```
+
+
+```{r}
+
+d <- df_recoded %>% 
+  # -- remove columns with all NA -- #
+  select_if(~!all(is.na(.))) %>% 
+  filter(progress == 100 & finished == TRUE) %>% 
+  filter(use_survey == "Yes") %>%
+  filter(use_survey_form == "Yes, I see my narrative and it is a valid challenging social media experience.") %>%
+  filter(use_survey_bot == "Yes, I see my narrative and it is a valid challenging social media experience.") %>%
+  # filter(use_survey != "Yes" | use_survey_form != "Yes, I see my narrative and it is a valid challenging social media experience." | use_survey_bot != "Yes, I see my narrative and it is a valid challenging social media experience.") %>%
+  # filter(`ac_90-100` >= 90 & `ac_90-100` <= 100) %>%
+  # filter(`ac_65-70` >= 65 & `ac_65-70` <= 70) %>%
+  filter(chatbot_summary != "" & !is.na(chatbot_summary)) %>%
+  mutate(ac_1_pass = `ac_90-100` >= 90 & `ac_90-100` <= 100) %>% 
+  mutate(ac_2_pass = `ac_65-70` >= 65 & `ac_65-70` <= 70)
+
+d %>% 
+  filter(xor(ac_1_pass, ac_2_pass)) %>% 
+  pull(pid) %>% 
+  cat(sep="\n")
+
+d %>% 
+  filter((!ac_1_pass | is.na(ac_1_pass)) & (!ac_2_pass | is.na(ac_2_pass))) %>% 
+  pull(pid)
+
+
+
+```
+
+
+
 
 Export
 ===
@@ -107,6 +172,11 @@ df_proc %>%
   write_csv(here(filepath_output))
 ```
 
+
+
+```{r}
+df_proc$qualtrics_summary == df_proc$qualtrics_summary_157
+```
 
 
 

@@ -21,13 +21,11 @@ library(lmerTest)
 library(tidyverse)
 library(ggthemr)
 library(brms)
+library(rsurveyutils)
 library(sjPlot)
-# theme_set(theme_bw())
-ggthemr("fresh")
-```
-
-```{r, eval=FALSE}
+theme_set(theme_bw())
 library(tidylog)
+library(tidybayes)
 ```
 
 
@@ -42,11 +40,35 @@ filepath <- "data/proc/micronarrative_llm_vs_qualtrics_aug2024_proc.csv"
 df_raw <- read_csv(here(filepath))
 ```
 
+
+
 Process data
 ---
 ```{r, message=FALSE}
-df_survey <- df_raw 
+
+df_raw$order %>% table
+
+df_survey_bp <- df_raw %>% 
+  mutate(start_date = ymd_hms(start_date),
+         end_date = ymd_hms(end_date)) %>%
+  arrange(start_date) %>% 
+  mutate(first_activity = str_extract(order, "^chatbot|^qualtrics")) %>% 
+  mutate(first_activity = case_when(
+    first_activity == "chatbot" ~ "bot",
+    first_activity == "qualtrics" ~ "form",
+    TRUE ~ NA_character_
+  )) 
+
+df_survey_wp <- df_survey_bp %>% 
+  group_by(order) %>%
+  slice(1:118) %>% # make group sizes equal
+  ungroup 
 ```
+
+```{r}
+
+```
+
 
 
 ```{r, echo=FALSE}
@@ -55,57 +77,527 @@ df_survey <- df_raw
 ```
 
 
-Helpful in articulating
+
+Preliminaries
 ===
 ```{r}
-d <- df_survey %>% 
+df_survey_bp$order %>% table
+df_survey$order %>% table
+```
+
+Demographics
+---
+```{r}
+df_survey_bp %>% 
+  summarize(
+    n = n(),
+    mean_age = mean(age, na.rm=T),
+    sd_age = sd(age, na.rm=T),
+    min_age = min(age, na.rm=T),
+    max_age = max(age, na.rm=T),
+    n_18 = sum(age == 18, na.rm=T),
+    pr_18 = mean(age == 18, na.rm=T),
+    n_19 = sum(age == 19, na.rm=T),
+    pr_19 = mean(age == 19, na.rm=T),
+    n_20 = sum(age == 20, na.rm=T),
+    pr_20 = mean(age == 20, na.rm=T),
+    n_men = sum(gender == "Male", na.rm=T),
+    n_women = sum(gender == "Female", na.rm=T),
+    n_other = sum(gender == "Other", na.rm=T)
+  ) %>% 
+  pivot_longer(everything()) %>% 
+  as.data.frame
+
+df_survey_bp %>% 
+  select(starts_with("race"), -ends_with("TEXT")) %>% 
+  pivot_longer(everything()) %>% 
+  drop_na(value) %>% 
+  count(value) %>% 
+  arrange(desc(n)) %>% 
+  mutate(pr = n/nrow(df_survey_bp)) %>% 
+  as.data.frame()
+# asian 
+37+23+8+7+1+1
+# other
+
+```
+
+
+
+Zero-order corr bot
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(
+    helpArticulate_bot, difficult_bot,
+    feelingChange_bot, valuable_bot, 
+    acc_obj_bot, acc_feel_bot,
+    otherUnderstand_bot,
+    privacy_bot, recommend_bot
+  )
+
+
+d %>% 
+  cor_matrix_kbl(expand.grid(names(d), names(d)))
+```
+
+Zero-order corr form
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(
+    helpArticulate_form, difficult_form,
+    feelingChange_form, valuable_form, 
+    acc_obj_form, acc_feel_form,
+    otherUnderstand_form,
+    privacy_form, recommend_form
+  )
+
+
+d %>% 
+  cor_matrix_kbl(expand.grid(names(d), names(d)))
+```
+
+
+
+Helpful in articulating
+===
+
+lmer
+---
+```{r}
+
+d <- df_survey_wp %>% 
+  select(pid, order, helpArticulate_bot, helpArticulate_form) %>% 
+  pivot_longer(cols = -c(pid, order), 
+               names_pattern = "helpArticulate_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+hist(d$value)
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05), alpha=.3) +
+  stat_summary(fun.data = "mean_cl_boot", color="darkred")
+
+d %>% 
+  lmer(value ~ method + (1|pid) + (method||order), data = .) %>%
+  tab_model()
+```
+> chatbot more helpful
+
+ZOIB within
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, helpArticulate_bot, helpArticulate_form) %>% 
+  pivot_longer(cols = -c(pid, order), 
+               names_pattern = "helpArticulate_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (1|order),
+#   coi ~ method + (1|pid) + (1|order),
+#   zoi ~ method + (1|pid) + (1|order),
+#   phi ~ method + (1|pid) + (1|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_articulate_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_articulate_zoib.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_articulate_zoib)
+summary(fit_articulate_zoib)
+
+mu_intercept <- as_draws_df(fit_articulate_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_articulate_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_articulate_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_articulate_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_articulate_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_articulate_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_articulate_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_articulate_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_articulate_zoib, h, alpha = .05)
+hypothesis(fit_articulate_zoib, h, alpha = .10)
+
+```
+
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, helpArticulate_bot, helpArticulate_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "helpArticulate_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_articulate_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_articulate_zoib_between.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_articulate_bp_zoib)
+summary(fit_articulate_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_articulate_bp_zoib, h, alpha = .05)
+hypothesis(fit_articulate_bp_zoib, h, alpha = .10)
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, helpArticulate_bot, helpArticulate_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "helpArticulate_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+
+)
+
+fit_articulate_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_articulate_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+
+pp_check(fit_articulate_bp_beta)
+summary(fit_articulate_bp_beta)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_articulate_bp_beta, h, alpha = .05)
+hypothesis(fit_articulate_bp_beta, h, alpha = .10)
+
+```
+
+
+
+Bayesian Gaussian
+---
+```{r}
+d <- df_survey_wp %>% 
   select(pid, helpArticulate_bot, helpArticulate_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "helpArticulate_(.*)", 
                names_to = "method",
-               values_to = "value") 
+               values_to = "value")
 
-d %>% 
-  ggplot(aes(x = method, y = value)) +
-  geom_point(position=position_jitter(.05)) +
-  stat_summary(fun.data = "mean_cl_boot")
-
-d %>% 
-  lmer(value ~ method + (1|pid), data = .) %>%
-  tab_model()
-
-fit_articulate <-  d %>% 
-  brm(value ~ method + (method|pid),
+fit_articulate_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
       data = .,
       family = gaussian(),
-      # control = list(
-      #   adapt_delta = 0.90, 
-      #   # max_treedepth = 15
-      #   ),
       cores = 4,
       chains = 4,
-      iter = 2000,
-      warmup = 500,
-      file = "models/fit_articulate.rds",
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_articulate_gaussian.rds",
       file_refit = "on_change"
-      )
-pp_check(fit_articulate)
+  )
 
-summary(fit_articulate)
+pp_check(fit_articulate_gaussian)
+summary(fit_articulate_gaussian)
 
 ```
-> bot appears to be more helpful in articulating than form
+
 
 
 Difficult to respond
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
   select(pid, difficult_bot, difficult_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "difficult_(.*)", 
                names_to = "method",
-               values_to = "value") 
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+hist(d$value)
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05), alpha=.3) +
+  stat_summary(fun.data = "mean_cl_boot", color="darkred")
+
+d %>% 
+  lmer(value ~ method + (1|method), data = .) %>%
+  tab_model()
+```
+> no effect.
+
+Bayesian ZOIB
+---
+```{r}
+
+d <- df_survey_wp %>% 
+  select(pid, order, difficult_bot, difficult_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "difficult_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_difficult_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .99),
+      file = "models/fit_difficult_zoib.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_difficult_zoib)
+summary(fit_difficult_zoib)
+
+
+conditional_effects(fit_difficult_zoib)
+
+
+mu_intercept <- as_draws_df(fit_difficult_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_difficult_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_difficult_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_difficult_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_difficult_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_difficult_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_difficult_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_difficult_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) > 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) > 0"
+)
+hypothesis(fit_difficult_zoib, h, alpha = .05)
+hypothesis(fit_difficult_zoib, h, alpha = .10)
+
+```
+
+
+
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, difficult_bot, difficult_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "difficult_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_difficult_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_difficult_zoib_between.rds",
+      file_refit = "on_change"
+  )
+
+conditional_effects(fit_difficult_bp_zoib)
+pp_check(fit_difficult_bp_zoib)
+summary(fit_difficult_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) > 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) > 0"
+)
+
+hypothesis(fit_difficult_bp_zoib, h, alpha = .05)
+hypothesis(fit_difficult_bp_zoib, h, alpha = .10)
+
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, difficult_bot, difficult_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "difficult_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  ))  %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_difficult_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_difficult_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_difficult_bp_beta)
+
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) < 0"
+)
+hypothesis(fit_difficult_bp_beta, h, alpha = .05)
+hypothesis(fit_difficult_bp_beta, h, alpha = .10)
+
+```
+
+
+Bayesian gaussian
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, difficult_bot, difficult_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "difficult_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+fit_difficult_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_difficult_gaussian.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_difficult_gaussian)
+summary(fit_difficult_gaussian)
+
+
+```
+
+
+
+Valuable for youth
+===
+
+lmer
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, valuable_bot, valuable_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "valuable_(.*)", 
+               names_to = "method",
+               values_to = "value")  %>% 
+  mutate(value_sc = value/100)
+hist(d$value)
 
 d %>% 
   ggplot(aes(x = method, y = value)) +
@@ -116,63 +608,429 @@ d %>%
   lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
-> the form is much more difficult than the bot
+> form less valuable
 
 
-Valuable for youth
-===
+Bayesian ZOIB
+---
 ```{r}
-d <- df_survey %>% 
-  select(pid, valuable_bot, valuable_form) %>% 
-  pivot_longer(cols = -pid, 
+d <- df_survey_wp %>% 
+  select(pid, order, valuable_bot, valuable_form) %>% 
+  pivot_longer(cols = -c(pid, order),
                names_pattern = "valuable_(.*)", 
                names_to = "method",
-               values_to = "value") 
+               values_to = "value")  %>% 
+  mutate(value_sc = value/100)
 
-d %>% 
-  ggplot(aes(x = method, y = value)) +
-  geom_point(position=position_jitter(.05)) +
-  stat_summary(fun.data = "mean_cl_boot")
 
-d %>% 
-  lm(value ~ method, data = .) %>%
-  tab_model()
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_valuable_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_valuable_zoib.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_valuable_zoib)
+summary(fit_valuable_zoib)
+
+
+conditional_effects(fit_valuable_zoib)
+
+
+mu_intercept <- as_draws_df(fit_valuable_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_valuable_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_valuable_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_valuable_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_valuable_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_valuable_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_valuable_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_valuable_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_valuable_zoib, h, alpha = .05)
+hypothesis(fit_valuable_zoib, h, alpha = .10)
+```
+
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, valuable_bot, valuable_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "valuable_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_valuable_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_valuable_zoib_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_valuable_bp_zoib)
+summary(fit_valuable_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+hypothesis(fit_valuable_bp_zoib, h, alpha = .05)
+hypothesis(fit_valuable_bp_zoib, h, alpha = .10)
+
 
 ```
-> bot might be more helpful, but not reliable effect. mean is high though.
 
+Beta between
+----
+```{r}
+
+d <- df_survey_bp %>% 
+  select(pid, first_activity, valuable_bot, valuable_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "valuable_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_valuable_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_valuable_beta_between.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_valuable_bp_beta)
+summary(fit_valuable_bp_beta)
+
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_valuable_bp_beta, h, alpha = .05)
+hypothesis(fit_valuable_bp_beta, h, alpha = .10)
+
+```
+
+
+Bayesian gaussian
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, valuable_bot, valuable_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "valuable_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+fit_valuable_zoib_gaussian <- d %>% 
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_valuable_gaussian.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_valuable_zoib_gaussian)
+summary(fit_valuable_zoib_gaussian)
+
+```
 
 Feeling change
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
+  select(pid, feelingChange_bot, feelingChange_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "feelingChange_(.*)", 
+               names_to = "method",
+               values_to = "value") 
+hist(d$value)
+
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  geom_point(position=position_jitter(.05), alpha = .3)  +
+  stat_summary(fun.data = "mean_cl_boot", color="darkred")
+
+d %>% 
+  lmer(value ~ method + (1|method), data = .) %>%
+  tab_model()
+```
+> not really a difference between the two and neither are that helpful
+
+Bayesian ZOIB
+---
+
+### Diff between methods
+```{r}
+
+d <- df_survey_wp %>% 
+  select(pid, order, feelingChange_bot, feelingChange_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "feelingChange_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = (value+100)/200)
+
+
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+
+fit_feelingChange_zoib <- d %>%
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_feelingChange_zoib.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_feelingChange_zoib)
+summary(fit_feelingChange_zoib)
+
+conditional_effects(fit_feelingChange_zoib)
+
+
+mu_intercept <- as_draws_df(fit_feelingChange_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_feelingChange_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_feelingChange_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_feelingChange_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_feelingChange_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_feelingChange_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_feelingChange_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_feelingChange_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_feelingChange_zoib, h, alpha = .05)
+hypothesis(fit_feelingChange_zoib, h, alpha = .10)
+
+```
+> Nope (is something wrong here?)
+
+### Diff from no change
+```{r}
+
+```
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, feelingChange_bot, feelingChange_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "feelingChange_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = (value+100)/200)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_feelingChange_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_feelingChange_zoib_between.rds",
+      file_refit = "on_change"
+  )
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+hypothesis(fit_feelingChange_bp_zoib, h, alpha = .05)
+hypothesis(fit_feelingChange_bp_zoib, h, alpha = .10)
+
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, feelingChange_bot, feelingChange_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "feelingChange_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = (value+100)/200) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("bot", "form")))
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_feelingChange_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_feelingChange_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_feelingChange_bp_beta)
+summary(fit_feelingChange_bp_beta)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_feelingChange_bp_beta, h, alpha = .05)
+hypothesis(fit_feelingChange_bp_beta, h, alpha = .10)
+
+```
+
+
+
+Bayesian Gaussian
+---
+```{r}
+d <- df_survey_wp %>% 
   select(pid, feelingChange_bot, feelingChange_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "feelingChange_(.*)", 
                names_to = "method",
                values_to = "value") 
 
-d %>% 
-  ggplot(aes(x = method, y = value)) +
-  geom_point(position=position_jitter(.05)) +
-  stat_summary(fun.data = "mean_cl_boot")
+fit_feelingChange_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_feelingChange_gaussian.rds",
+      file_refit = "on_change"
+  )
 
-d %>% 
-  lm(value ~ method, data = .) %>%
-  tab_model()
+pp_check(fit_feelingChange_gaussian)
+summary(fit_feelingChange_gaussian)
+
+
+
 ```
-> not really a difference between the two and neither are that helpful
 
 
 Accurate objective circumstances
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
   select(pid, acc_obj_bot, acc_obj_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "acc_obj_(.*)", 
                names_to = "method",
                values_to = "value") 
+hist(d$value)
 
 d %>% 
   ggplot(aes(x = method, y = value)) +
@@ -180,15 +1038,200 @@ d %>%
   stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
-> not much difference
+> no diff
+
+
+Bayesian ZOIB
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, acc_obj_bot, acc_obj_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "acc_obj_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_acc_obj_zoib <- d %>%
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_acc_obj_zoib.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_acc_obj_zoib)
+summary(fit_acc_obj_zoib)
+
+conditional_effects(fit_acc_obj_zoib)
+
+
+mu_intercept <- as_draws_df(fit_acc_obj_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_acc_obj_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_acc_obj_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_acc_obj_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_acc_obj_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_acc_obj_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_acc_obj_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_acc_obj_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_acc_obj_zoib, h, alpha = .05)
+hypothesis(fit_acc_obj_zoib, h, alpha = .10)
+```
+> mu yes, coi no
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, acc_obj_bot, acc_obj_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "acc_obj_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_acc_obj_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_acc_obj_zoib_between.rds",
+      file_refit = "on_change"
+  )
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+hypothesis(fit_acc_obj_bp_zoib, h, alpha = .05)
+hypothesis(fit_acc_obj_bp_zoib, h, alpha = .10)
+
+
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, acc_obj_bot, acc_obj_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "acc_obj_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_acc_obj_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_acc_obj_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_acc_obj_bp_beta)
+summary(fit_acc_obj_bp_beta)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_acc_obj_bp_beta, h, alpha = .05)
+hypothesis(fit_acc_obj_bp_beta, h, alpha = .10)
+
+```
+
+
+
+Bayesian gaussian
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, acc_obj_bot, acc_obj_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "acc_obj_(.*)", 
+               names_to = "method",
+               values_to = "value")
+hist(d$value)
+
+fit_acc_obj_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_acc_obj_gaussian.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_acc_obj_gaussian)
+summary(fit_acc_obj_gaussian)
+
+```
+
 
 Accurate feelings
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
   select(pid, acc_feel_bot, acc_feel_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "acc_feel_(.*)", 
@@ -201,15 +1244,209 @@ d %>%
   stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
-> not particularly different
+> no diff
+
+Bayesian ZOIB
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, acc_feel_bot, acc_feel_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "acc_feel_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_acc_feel_zoib <- d %>%
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_acc_feel_zoib.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_acc_feel_zoib)
+summary(fit_acc_feel_zoib)
+
+
+conditional_effects(fit_acc_feel_zoib)
+
+
+mu_intercept <- as_draws_df(fit_acc_feel_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_acc_feel_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_acc_feel_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_acc_feel_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_acc_feel_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_acc_feel_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_acc_feel_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_acc_feel_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_acc_feel_zoib, h, alpha = .05)
+hypothesis(fit_acc_feel_zoib, h, alpha = .10)
+
+```
+> mu yes, coi no
+
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, acc_feel_bot, acc_feel_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "acc_feel_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_acc_feel_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_acc_feel_zoib_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_acc_feel_bp_zoib)
+summary(fit_acc_feel_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+hypothesis(fit_acc_feel_bp_zoib, h, alpha = .05)
+hypothesis(fit_acc_feel_bp_zoib, h, alpha = .10)
+
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, acc_feel_bot, acc_feel_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "acc_feel_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_acc_feel_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_acc_feel_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_acc_feel_bp_beta)
+summary(fit_acc_feel_bp_beta)
+
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_acc_feel_bp_beta, h, alpha = .05)
+hypothesis(fit_acc_feel_bp_beta, h, alpha = .10)
+
+```
+
+
+Bayesian gaussian
+---
+```{r}
+
+d <- df_survey_wp %>% 
+  select(pid, acc_feel_bot, acc_feel_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "acc_feel_(.*)", 
+               names_to = "method",
+               values_to = "value")
+
+hist(d$value)
+
+fit_acc_feel_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_acc_feel_gaussian.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_acc_feel_gaussian)
+summary(fit_acc_feel_gaussian)
+
+
+```
+
 
 Others would understand
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
   select(pid, otherUnderstand_bot, otherUnderstand_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "otherUnderstand_(.*)", 
@@ -220,112 +1457,213 @@ d %>%
   ggplot(aes(x = method, y = value)) +
   geom_point(position=position_jitter(.05)) +
   stat_summary(fun.data = "mean_cl_boot")
+d %>% 
+  ggplot(aes(x = method, y = value)) +
+  # geom_point(position=position_jitter(.05)) +
+  stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
-> others would understand much better with the bot's help
+> no diff and non convergence.
 
-Ease of capturing what you wanted
-===
+
+Bayesian ZOIB
+---
 ```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, otherUnderstand_bot, otherUnderstand_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "otherUnderstand_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
 
-df_survey %>% 
-  ggplot(aes(x = easeCapture_compare)) + 
-  geom_histogram()
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
 
 
-df_survey %>% 
-  summarize(
-    mean = mean(easeCapture_compare, na.rm = TRUE),
-    sd = sd(easeCapture_compare, na.rm = TRUE),
-    n = n(),
-    pr_bot_higher = mean(easeCapture_compare > 0, na.rm = TRUE),
+fit_otherUnderstand_zoib <- d %>%
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_otherUnderstand_zoib.rds",
+      file_refit = "on_change"
   )
+
+pp_check(fit_otherUnderstand_zoib)
+summary(fit_otherUnderstand_zoib)
+
+
+conditional_effects(fit_otherUnderstand_zoib)
+
+
+mu_intercept <- as_draws_df(fit_otherUnderstand_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_otherUnderstand_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_otherUnderstand_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_otherUnderstand_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_otherUnderstand_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_otherUnderstand_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_otherUnderstand_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_otherUnderstand_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_otherUnderstand_zoib, h, alpha = .05)
+hypothesis(fit_otherUnderstand_zoib, h, alpha = .10)
+
 ```
-> Not much difference
+> mu yes, coi no
 
 
-Appropriate for youth
-===
+ZOIB between
+---
 ```{r}
-df_survey %>% 
-  ggplot(aes(x = forYouth_compare)) +
-  geom_histogram()
+d <- df_survey_bp %>% 
+  select(pid, first_activity, otherUnderstand_bot, otherUnderstand_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "otherUnderstand_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
 
-df_survey %>% 
-  summarize(
-    mean = mean(forYouth_compare, na.rm = TRUE),
-    sd = sd(forYouth_compare, na.rm = TRUE),
-    n = n(),
-    pr_bot_higher = mean(forYouth_compare > 0, na.rm = TRUE),
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_otherUnderstand_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_otherUnderstand_zoib_between.rds",
+      file_refit = "on_change"
   )
+
+pp_check(fit_otherUnderstand_bp_zoib)
+summary(fit_otherUnderstand_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+hypothesis(fit_otherUnderstand_bp_zoib, h, alpha = .05)
+hypothesis(fit_otherUnderstand_bp_zoib, h, alpha = .10)
 ```
-> 
 
-
-Sense making
-===
+Beta between
+---
 ```{r}
-df_survey %>% 
-  ggplot(aes(x = senseMaking_compare)) +
-  geom_histogram()
+d <- df_survey_bp %>% 
+  select(pid, first_activity, otherUnderstand_bot, otherUnderstand_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "otherUnderstand_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
 
-df_survey %>% 
-  summarize(
-    mean = mean(senseMaking_compare, na.rm = TRUE),
-    sd = sd(senseMaking_compare, na.rm = TRUE),
-    n = n(),
-    pr_bot_higher = mean(senseMaking_compare > 0, na.rm = TRUE),
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_otherUnderstand_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_otherUnderstand_beta_between.rds",
+      file_refit = "on_change"
   )
+
+pp_check(fit_otherUnderstand_bp_beta)
+summary(fit_otherUnderstand_bp_beta)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_otherUnderstand_bp_beta, h, alpha = .05)
+hypothesis(fit_otherUnderstand_bp_beta, h, alpha = .10)
+
+
+
 ```
-> Meh maybe slightly better for bot
 
 
-Captured your voice
-===
+Bayesian gaussian
+---
 ```{r}
+d <- df_survey_wp %>% 
+  select(pid, otherUnderstand_bot, otherUnderstand_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "otherUnderstand_(.*)", 
+               names_to = "method",
+               values_to = "value")
 
-df_survey %>% 
-  ggplot(aes(x = captureVoice_compare)) +
-  geom_histogram()
-
-df_survey %>% 
-  summarize(
-    mean = mean(captureVoice_compare, na.rm = TRUE),
-    sd = sd(captureVoice_compare, na.rm = TRUE),
-    n = n(),
-    pr_bot_higher = mean(captureVoice_compare > 0, na.rm = TRUE),
+fit_otherUnderstand_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_otherUnderstand_gaussian.rds",
+      file_refit = "on_change"
   )
+
+pp_check(fit_otherUnderstand_gaussian)
+summary(fit_otherUnderstand_gaussian)
 ```
-> Hard to say
-
-
-
-Helped address problem
-===
-```{r}
-
-df_survey %>% 
-  ggplot(aes(x = probSolve_compare)) +
-  geom_histogram()
-
-df_survey %>% 
-  summarize(
-    mean = mean(probSolve_compare, na.rm = TRUE),
-    sd = sd(probSolve_compare, na.rm = TRUE),
-    n = n(),
-    pr_bot_higher = mean(probSolve_compare > 0, na.rm = TRUE),
-  )
-```
-> Not much
 
 
 Privacy concerns
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
   select(pid, privacy_bot, privacy_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "privacy_(.*)", 
@@ -338,15 +1676,210 @@ d %>%
   stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
 > more concerns about bot
 
+Bayesian ZOIB
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, privacy_bot, privacy_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "privacy_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_privacy_zoib <- d %>%
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_privacy_zoib.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_privacy_zoib)
+summary(fit_privacy_zoib)
+
+
+conditional_effects(fit_privacy_zoib)
+
+
+mu_intercept <- as_draws_df(fit_privacy_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_privacy_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_privacy_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_privacy_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_privacy_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_privacy_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_privacy_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_privacy_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_privacy_zoib, h, alpha = .05)
+hypothesis(fit_privacy_zoib, h, alpha = .10)
+
+```
+> mu yes, coi yes (alpha = .10). more concerns about bot.
+
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, privacy_bot, privacy_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "privacy_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_privacy_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_privacy_zoib_between.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_privacy_bp_zoib)
+summary(fit_privacy_bp_zoib)
+
+conditional_effects(fit_privacy_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+hypothesis(fit_privacy_bp_zoib, h, alpha = .05)
+hypothesis(fit_privacy_bp_zoib, h, alpha = .10)
+
+
+
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, privacy_bot, privacy_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "privacy_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_privacy_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_privacy_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+
+pp_check(fit_privacy_bp_beta)
+summary(fit_privacy_bp_beta)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) < 0"
+)
+hypothesis(fit_privacy_bp_beta, h, alpha = .05)
+hypothesis(fit_privacy_bp_beta, h, alpha = .10)
+
+```
+
+
+Bayesian gaussian
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, privacy_bot, privacy_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "privacy_(.*)", 
+               names_to = "method",
+               values_to = "value")
+
+hist(d$value)
+
+fit_privacy_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_privacy_gaussian.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_privacy_gaussian)
+summary(fit_privacy_gaussian)
+```
+
+
+
 Recommend to friend
 ===
+
+lmer
+---
 ```{r}
-d <- df_survey %>% 
+d <- df_survey_wp %>% 
   select(pid, recommend_bot, recommend_form) %>% 
   pivot_longer(cols = -pid, 
                names_pattern = "recommend_(.*)", 
@@ -359,10 +1892,1474 @@ d %>%
   stat_summary(fun.data = "mean_cl_boot")
 
 d %>% 
-  lm(value ~ method, data = .) %>%
+  lmer(value ~ method + (1|method), data = .) %>%
   tab_model()
 ```
-> Would recommend bot more 
+
+
+Bayesian ZOIB
+---
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, recommend_bot, recommend_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "recommend_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+
+# f <- bf(
+#   value_sc ~ method + (1|pid) + (method|order),
+#   coi ~ method + (1|pid) + (method|order),
+#   zoi ~ method + (1|pid) + (method|order),
+#   phi ~ method + (1|pid) + (method|order)
+# )
+f <- bf(
+  value_sc ~ method + (1|pid),
+  coi ~ method + (1|pid),
+  zoi ~ method + (1|pid),
+  phi ~ method + (1|pid)
+)
+
+fit_recommend_zoib <- d %>%
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      control = list(adapt_delta = .90),
+      file = "models/fit_recommend_zoib.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_recommend_zoib)
+summary(fit_recommend_zoib)
+
+conditional_effects(fit_recommend_zoib)
+# d %>% 
+#   ggplot(aes(x = method, y = value)) +
+#   stat_summary(fun.data = "mean_cl_boot")
+
+
+mu_intercept <- as_draws_df(fit_recommend_zoib)$b_Intercept 
+mu_method <- as_draws_df(fit_recommend_zoib)$b_methodform
+coi_intercept <- as_draws_df(fit_recommend_zoib)$b_coi_Intercept
+coi_method <- as_draws_df(fit_recommend_zoib)$b_coi_methodform
+phi_intercept <- as_draws_df(fit_recommend_zoib)$b_phi_Intercept
+phi_method <- as_draws_df(fit_recommend_zoib)$b_phi_methodform
+zoi_intercept <- as_draws_df(fit_recommend_zoib)$b_zoi_Intercept
+zoi_method <- as_draws_df(fit_recommend_zoib)$b_zoi_methodform
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_recommend_zoib, h, alpha = .05)
+hypothesis(fit_recommend_zoib, h, alpha = .10)
+
+```
+> mu yes, coi yes, 
+
+```{r}
+d <- df_survey_wp %>% 
+  select(pid, order, recommend_bot, recommend_form) %>% 
+  pivot_longer(cols = -c(pid, order),
+               names_pattern = "recommend_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  mutate(value_sc = value/100)
+
+d %>% 
+  filter(value_sc == 0 | value_sc == 1) %>%
+  group_by(method) %>% 
+  summarize(
+    pr = mean(value_sc)
+  )
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_recommend_zoib_noRE <- brm(
+  f,
+  data = d,
+  family = zero_one_inflated_beta(),
+  cores = 4,
+  chains = 4,
+  iter = 5000,
+  warmup = 1000,
+  control = list(adapt_delta = .90),
+  file = "models/fit_recommend_zoib_noRE.rds",
+  file_refit = "on_change"
+)
+
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) < 0"
+)
+hypothesis(fit_recommend_zoib_noRE, h, alpha = .05)
+hypothesis(fit_recommend_zoib_noRE, h, alpha = .10)
+
+
+coi_intercept <- as_draws_df(fit_recommend_zoib_noRE)$b_coi_Intercept
+coi_method <- as_draws_df(fit_recommend_zoib_noRE)$b_coi_methodform
+
+mean(plogis(coi_intercept + coi_method) - plogis(coi_intercept))
+```
+
+
+ZOIB between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, recommend_bot, recommend_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "recommend_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100)
+
+f <- bf(
+  value_sc ~ method,
+  coi ~ method,
+  zoi ~ method,
+  phi ~ method
+)
+
+fit_recommend_bp_zoib <- d %>% 
+  brm(f,
+      data = .,
+      family = zero_one_inflated_beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      # control = list(adapt_delta = .90),
+      file = "models/fit_recommend_zoib_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_recommend_bp_zoib)
+summary(fit_recommend_bp_zoib)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+hypothesis(fit_recommend_bp_zoib, h, alpha = .05)
+hypothesis(fit_recommend_bp_zoib, h, alpha = .10)
+```
+
+Beta between
+---
+```{r}
+d <- df_survey_bp %>% 
+  select(pid, first_activity, recommend_bot, recommend_form) %>% 
+  pivot_longer(cols = -c(pid, first_activity),
+               names_pattern = "recommend_(.*)", 
+               names_to = "method",
+               values_to = "value") %>% 
+  filter(first_activity == method) %>% 
+  mutate(value_sc = value/100) %>% 
+  mutate(value_sc = case_when(
+    value_sc == 0 ~ 0.01,
+    value_sc == 1 ~ 0.99,
+    TRUE ~ value_sc
+  )) %>% 
+  mutate(method = factor(method, levels = c("form", "bot"))) 
+
+f <- bf(
+  value_sc ~ method,
+  phi ~ method
+)
+
+fit_recommend_bp_beta <- d %>% 
+  brm(f,
+      data = .,
+      family = Beta(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_recommend_beta_between.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_recommend_bp_beta)
+summary(fit_recommend_bp_beta)
+
+h <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+hypothesis(fit_recommend_bp_beta, h, alpha = .05)
+hypothesis(fit_recommend_bp_beta, h, alpha = .10)
+
+```
+
+
+Bayesian gaussian
+---
+```{r}
+
+
+d <- df_survey_wp %>% 
+  select(pid, recommend_bot, recommend_form) %>% 
+  pivot_longer(cols = -pid, 
+               names_pattern = "recommend_(.*)", 
+               names_to = "method",
+               values_to = "value")
+
+fit_recommend_gaussian <- d %>%
+  brm(value ~ method + (1|pid),
+      data = .,
+      family = gaussian(),
+      cores = 4,
+      chains = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_recommend_gaussian.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_recommend_gaussian)
+summary(fit_recommend_gaussian)
+
+```
+
+
+ZOIB table
+===
+```{r}
+h_form_equal <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "plogis(phi_Intercept + phi_methodform) - plogis(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+round_n <- 4
+
+(h_articulate_zoib_90 <- hypothesis(fit_articulate_zoib, 
+                                    h_form_equal, alpha=.10))
+(h_difficult_zoib_90 <- hypothesis(fit_difficult_zoib,
+                                   h_form_equal, alpha=.10))
+(h_valuable_zoib_90 <- hypothesis(fit_valuable_zoib,
+                                  h_form_equal, alpha=.10))
+(h_feelingChange_zoib_90 <- hypothesis(fit_feelingChange_zoib, 
+                                       h_form_equal, alpha=.10))
+(h_recommend_zoib_90 <- hypothesis(fit_recommend_zoib, 
+                                   h_form_equal, alpha=.10))
+(h_acc_obj_zoib_90 <- hypothesis(fit_acc_obj_zoib, 
+                                 h_form_equal, alpha=.10))
+(h_acc_feel_zoib_90 <- hypothesis(fit_acc_feel_zoib, 
+                                  h_form_equal, alpha=.10))
+(h_otherUnderstand_zoib_90 <- hypothesis(fit_otherUnderstand_zoib, 
+                                         h_form_equal, alpha=.10))
+(h_privacy_zoib_90 <- hypothesis(fit_privacy_zoib, h_form_equal, alpha=.10))
+(h_recommend_zoib_90 <- hypothesis(fit_recommend_zoib, h_form_equal, alpha=.10))
+
+
+(h_articulate_zoib_95 <- hypothesis(fit_articulate_zoib,
+                                    h_form_equal, alpha=.05))
+(h_difficult_zoib_95 <- hypothesis(fit_difficult_zoib,
+                                   h_form_equal, alpha=.05))
+(h_valuable_zoib_95 <- hypothesis(fit_valuable_zoib, 
+                                  h_form_equal, alpha=.05))
+(h_feelingChange_zoib_95 <- hypothesis(fit_feelingChange_zoib, 
+                                       h_form_equal, alpha=.05))
+(h_recommend_zoib_95 <- hypothesis(fit_recommend_zoib, 
+                                   h_form_equal, alpha=.05))
+(h_acc_obj_zoib_95 <- hypothesis(fit_acc_obj_zoib,
+                                 h_form_equal, alpha=.05))
+(h_acc_feel_zoib_95 <- hypothesis(fit_acc_feel_zoib, 
+                                  h_form_equal, alpha=.05))
+(h_otherUnderstand_zoib_95 <- hypothesis(fit_otherUnderstand_zoib,
+                                         h_form_equal, alpha=.05))
+(h_privacy_zoib_95 <- hypothesis(fit_privacy_zoib, 
+                                 h_form_equal, alpha=.05))
+(h_recommend_zoib_95 <- hypothesis(fit_recommend_zoib, 
+                                   h_form_equal, alpha=.05))
+
+cri_articulate_mu_est <- round(h_articulate_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_articulate_mu_95 <- paste0(
+  "[",
+  round(h_articulate_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_articulate_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_articulate_coi_est <- round(h_articulate_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_articulate_coi_95 <- paste0(
+  "[",
+  round(h_articulate_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_articulate_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_articulate_phi_est <- round(h_articulate_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_articulate_phi_95 <- paste0(
+  "[",
+  round(h_articulate_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_articulate_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_articulate_zoi_est <- round(h_articulate_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_articulate_zoi_95 <- paste0(
+  "[",
+  round(h_articulate_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_articulate_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_difficult_mu_est <- round(h_difficult_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_difficult_mu_95 <- paste0(
+  "[",
+  round(h_difficult_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_difficult_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_difficult_coi_est <- round(h_difficult_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_difficult_coi_95 <- paste0(
+  "[",
+  round(h_difficult_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_difficult_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_difficult_phi_est <- round(h_difficult_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_difficult_phi_95 <- paste0(
+  "[",
+  round(h_difficult_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_difficult_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_difficult_zoi_est <- round(h_difficult_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_difficult_zoi_95 <- paste0(
+  "[",
+  round(h_difficult_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_difficult_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_valuable_mu_est <- round(h_valuable_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_valuable_mu_95 <- paste0(
+  "[",
+  round(h_valuable_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_valuable_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_valuable_coi_est <- round(h_valuable_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_valuable_coi_95 <- paste0(
+  "[",
+  round(h_valuable_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_valuable_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_valuable_phi_est <- round(h_valuable_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_valuable_phi_95 <- paste0(
+  "[",
+  round(h_valuable_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_valuable_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_valuable_zoi_est <- round(h_valuable_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_valuable_zoi_95 <- paste0(
+  "[",
+  round(h_valuable_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_valuable_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_feelingChange_mu_est <- round(h_feelingChange_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_feelingChange_mu_95 <- paste0(
+  "[",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_feelingChange_coi_est <- round(h_feelingChange_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_feelingChange_coi_95 <- paste0(
+  "[",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_feelingChange_phi_est <- round(h_feelingChange_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_feelingChange_phi_95 <- paste0(
+  "[",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_feelingChange_zoi_est <- round(h_feelingChange_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_feelingChange_zoi_95 <- paste0(
+  "[",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_feelingChange_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_recommend_mu_est <- round(h_recommend_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_recommend_mu_95 <- paste0(
+  "[",
+  round(h_recommend_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_recommend_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_recommend_coi_est <- round(h_recommend_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_recommend_coi_95 <- paste0(
+  "[",
+  round(h_recommend_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_recommend_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_recommend_phi_est <- round(h_recommend_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_recommend_phi_95 <- paste0(
+  "[",
+  round(h_recommend_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_recommend_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_recommend_zoi_est <- round(h_recommend_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_recommend_zoi_95 <- paste0(
+  "[",
+  round(h_recommend_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_recommend_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_acc_obj_mu_est <- round(h_acc_obj_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_acc_obj_mu_95 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_acc_obj_coi_est <- round(h_acc_obj_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_acc_obj_coi_95 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_acc_obj_phi_est <- round(h_acc_obj_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_acc_obj_phi_95 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_acc_obj_zoi_est <- round(h_acc_obj_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_acc_obj_zoi_95 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_acc_feel_mu_est <- round(h_acc_feel_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_acc_feel_mu_95 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_acc_feel_coi_est <- round(h_acc_feel_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_acc_feel_coi_95 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_acc_feel_phi_est <- round(h_acc_feel_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_acc_feel_phi_95 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_acc_feel_zoi_est <- round(h_acc_feel_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_acc_feel_zoi_95 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_otherUnderstand_mu_est <- round(h_otherUnderstand_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_otherUnderstand_mu_95 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_otherUnderstand_coi_est <- round(h_otherUnderstand_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_otherUnderstand_coi_95 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_otherUnderstand_phi_est <- round(h_otherUnderstand_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_otherUnderstand_phi_95 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_otherUnderstand_zoi_est <- round(h_otherUnderstand_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_otherUnderstand_zoi_95 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_privacy_mu_est <- round(h_privacy_zoib_90$hypothesis$Estimate[[1]], round_n)
+cri_privacy_mu_95 <- paste0(
+  "[",
+  round(h_privacy_zoib_95$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_privacy_zoib_95$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_privacy_coi_est <- round(h_privacy_zoib_90$hypothesis$Estimate[[2]], round_n)
+cri_privacy_coi_95 <- paste0(
+  "[",
+  round(h_privacy_zoib_95$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_privacy_zoib_95$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_privacy_phi_est <- round(h_privacy_zoib_90$hypothesis$Estimate[[3]], round_n)
+cri_privacy_phi_95 <- paste0(
+  "[",
+  round(h_privacy_zoib_95$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_privacy_zoib_95$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_privacy_zoi_est <- round(h_privacy_zoib_90$hypothesis$Estimate[[4]], round_n)
+cri_privacy_zoi_95 <- paste0(
+  "[",
+  round(h_privacy_zoib_95$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_privacy_zoib_95$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+
+
+
+t <- tribble(
+  ~model, ~mu, ~mu95, ~coi, ~coi95, ~phi, ~phi95, ~zoi, ~zoi95,
+  "articulate", cri_articulate_mu_est, cri_articulate_mu_95, cri_articulate_coi_est, cri_articulate_coi_95, cri_articulate_phi_est, cri_articulate_phi_95, cri_articulate_zoi_est, cri_articulate_zoi_95,
+  "difficult", cri_difficult_mu_est, cri_difficult_mu_95, cri_difficult_coi_est, cri_difficult_coi_95, cri_difficult_phi_est, cri_difficult_phi_95, cri_difficult_zoi_est, cri_difficult_zoi_95,
+  "valuable", cri_valuable_mu_est, cri_valuable_mu_95, cri_valuable_coi_est, cri_valuable_coi_95, cri_valuable_phi_est, cri_valuable_phi_95, cri_valuable_zoi_est, cri_valuable_zoi_95,
+  # "feelingChange", cri_feelingChange_mu_est, cri_feelingChange_mu_95, cri_feelingChange_coi_est, cri_feelingChange_coi_95, cri_feelingChange_phi_est, cri_feelingChange_phi_95, cri_feelingChange_zoi_est, cri_feelingChange_zoi_95,
+  "recommend", cri_recommend_mu_est, cri_recommend_mu_95, cri_recommend_coi_est, cri_recommend_coi_95, cri_recommend_phi_est, cri_recommend_phi_95, cri_recommend_zoi_est, cri_recommend_zoi_95,
+  "acc_obj", cri_acc_obj_mu_est, cri_acc_obj_mu_95, cri_acc_obj_coi_est, cri_acc_obj_coi_95, cri_acc_obj_phi_est, cri_acc_obj_phi_95, cri_acc_obj_zoi_est, cri_acc_obj_zoi_95,
+  "acc_feel", cri_acc_feel_mu_est, cri_acc_feel_mu_95, cri_acc_feel_coi_est, cri_acc_feel_coi_95, cri_acc_feel_phi_est, cri_acc_feel_phi_95, cri_acc_feel_zoi_est, cri_acc_feel_zoi_95,
+  "otherUnderstand", cri_otherUnderstand_mu_est, cri_otherUnderstand_mu_95, cri_otherUnderstand_coi_est, cri_otherUnderstand_coi_95, cri_otherUnderstand_phi_est, cri_otherUnderstand_phi_95, cri_otherUnderstand_zoi_est, cri_otherUnderstand_zoi_95,
+  "privacy", cri_privacy_mu_est, cri_privacy_mu_95, cri_privacy_coi_est, cri_privacy_coi_95, cri_privacy_phi_est, cri_privacy_phi_95, cri_privacy_zoi_est, cri_privacy_zoi_95
+  
+)
+
+view(t)
+t %>% 
+  write_csv("figures/zoib_table.csv")
+# t <- tribble(
+#   ~model, ~mu, ~mu95, ~mu90, ~coi, ~coi95, ~coi90, ~phi, ~phi95, ~phi90, ~zoi, ~zoi95, ~zoi90,
+# )
+
+fit_articulate_zoib
+fit_difficult_zoib
+fit_valuable_zoib
+fit_feelingChange_zoib  # big problems
+fit_recommend_zoib
+fit_acc_obj_zoib
+fit_acc_feel_zoib
+fit_otherUnderstand_zoib
+fit_privacy_zoib
+fit_recommend_zoib
+
+```
+
+
+ZOIB table - between person
+===
+```{r}
+h_form_equal <- c(
+  "mu" = "plogis(Intercept + methodform) - plogis(Intercept) = 0",
+  "coi" = "plogis(coi_Intercept + coi_methodform) - plogis(coi_Intercept) = 0",
+  "phi" = "exp(phi_Intercept + phi_methodform) - exp(phi_Intercept) = 0",
+  "zoi" = "plogis(zoi_Intercept + zoi_methodform) - plogis(zoi_Intercept) = 0"
+)
+
+hypothesis(fit_valuable_bp_zoib,
+           "plogis(Intercept + methodform) - plogis(Intercept) < 0",
+           alpha=.10)
+
+round_n <- 4
+
+(h_articulate_zoib_bp_90 <- hypothesis(fit_articulate_bp_zoib, 
+                                       h_form_equal, alpha=.10))
+(h_difficult_zoib_bp_90 <- hypothesis(fit_difficult_bp_zoib,
+                                      h_form_equal, alpha=.10))
+(h_valuable_zoib_bp_90 <- hypothesis(fit_valuable_bp_zoib,
+                                     h_form_equal, alpha=.10))
+# (h_feelingChange_zoib_bp_90 <- hypothesis(fit_feelingChange_bp_zoib, 
+#                                           h_form_equal, alpha=.10))
+(h_recommend_zoib_bp_90 <- hypothesis(fit_recommend_bp_zoib,
+                                      h_form_equal, alpha=.10))
+(h_acc_obj_zoib_bp_90 <- hypothesis(fit_acc_obj_bp_zoib,
+                                    h_form_equal, alpha=.10))
+(h_acc_feel_zoib_bp_90 <- hypothesis(fit_acc_feel_bp_zoib, 
+                                     h_form_equal, alpha=.10))
+(h_otherUnderstand_zoib_bp_90 <- hypothesis(fit_otherUnderstand_bp_zoib, 
+                                            h_form_equal, alpha=.10))
+(h_privacy_zoib_bp_90 <- hypothesis(fit_privacy_bp_zoib, h_form_equal, alpha=.10))
+(h_recommend_zoib_bp_90 <- hypothesis(fit_recommend_bp_zoib, h_form_equal, alpha=.10))
+(h_articulate_zoib_bp_95 <- hypothesis(fit_articulate_bp_zoib,
+                                       h_form_equal, alpha=.05))
+(h_difficult_zoib_bp_95 <- hypothesis(fit_difficult_bp_zoib,
+                                      h_form_equal, alpha=.05))
+(h_valuable_zoib_bp_95 <- hypothesis(fit_valuable_bp_zoib,
+                                     h_form_equal, alpha=.05))
+# (h_feelingChange_zoib_bp_95 <- hypothesis(fit_feelingChange_bp_zoib,
+#                                           h_form_equal, alpha=.05))
+(h_recommend_zoib_bp_95 <- hypothesis(fit_recommend_bp_zoib,
+                                      h_form_equal, alpha=.05))
+(h_acc_obj_zoib_bp_95 <- hypothesis(fit_acc_obj_bp_zoib,
+                                    h_form_equal, alpha=.05))
+(h_acc_feel_zoib_bp_95 <- hypothesis(fit_acc_feel_bp_zoib,
+                                     h_form_equal, alpha=.05))
+(h_otherUnderstand_zoib_bp_95 <- hypothesis(fit_otherUnderstand_bp_zoib,
+                                            h_form_equal, alpha=.05))
+(h_privacy_zoib_bp_95 <- hypothesis(fit_privacy_bp_zoib,
+                                    h_form_equal, alpha=.05))
+(h_recommend_zoib_bp_95 <- hypothesis(fit_recommend_bp_zoib,
+                                      h_form_equal, alpha=.05))
+
+cri_articulate_mu_est <- round(h_articulate_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_articulate_mu_90 <- paste0(
+  "[",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_articulate_coi_est <- round(h_articulate_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_articulate_coi_90 <- paste0(
+  "[",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_articulate_phi_est <- round(h_articulate_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_articulate_phi_90 <- paste0(
+  "[",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_articulate_zoi_est <- round(h_articulate_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_articulate_zoi_90 <- paste0(
+  "[",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_articulate_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_difficult_mu_est <- round(h_difficult_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_difficult_mu_90 <- paste0(
+  "[",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_difficult_coi_est <- round(h_difficult_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_difficult_coi_90 <- paste0(
+  "[",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_difficult_phi_est <- round(h_difficult_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_difficult_phi_90 <- paste0(
+  "[",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_difficult_zoi_est <- round(h_difficult_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_difficult_zoi_90 <- paste0(
+  "[",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_difficult_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_valuable_mu_est <- round(h_valuable_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_valuable_mu_90 <- paste0(
+  "[",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_valuable_coi_est <- round(h_valuable_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_valuable_coi_90 <- paste0(
+  "[",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_valuable_phi_est <- round(h_valuable_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_valuable_phi_90 <- paste0(
+  "[",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_valuable_zoi_est <- round(h_valuable_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_valuable_zoi_90 <- paste0(
+  "[",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_valuable_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+# cri_feelingChange_mu_est <- round(h_feelingChange_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+# cri_feelingChange_mu_90 <- paste0(
+#   "[",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+#   ", ",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+#   "]"
+#   )
+# cri_feelingChange_coi_est <- round(h_feelingChange_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+# cri_feelingChange_coi_90 <- paste0(
+#   "[",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+#   ", ",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+#   "]"
+#   )
+# cri_feelingChange_phi_est <- round(h_feelingChange_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+# cri_feelingChange_phi_90 <- paste0(
+#   "[",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+#   ", ",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+#   "]"
+#   )
+# cri_feelingChange_zoi_est <- round(h_feelingChange_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+# cri_feelingChange_zoi_90 <- paste0(
+#   "[",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+#   ", ",
+#   round(h_feelingChange_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+#   "]"
+#   )
+
+cri_recommend_mu_est <- round(h_recommend_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_recommend_mu_90 <- paste0(
+  "[",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_recommend_coi_est <- round(h_recommend_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_recommend_coi_90 <- paste0(
+  "[",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_recommend_phi_est <- round(h_recommend_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_recommend_phi_90 <- paste0(
+  "[",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_recommend_zoi_est <- round(h_recommend_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_recommend_zoi_90 <- paste0(
+  "[",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_recommend_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_acc_obj_mu_est <- round(h_acc_obj_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_acc_obj_mu_90 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_acc_obj_coi_est <- round(h_acc_obj_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_acc_obj_coi_90 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_acc_obj_phi_est <- round(h_acc_obj_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+
+cri_acc_obj_phi_90 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_acc_obj_zoi_est <- round(h_acc_obj_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_acc_obj_zoi_90 <- paste0(
+  "[",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_acc_obj_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_acc_feel_mu_est <- round(h_acc_feel_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_acc_feel_mu_90 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_acc_feel_coi_est <- round(h_acc_feel_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_acc_feel_coi_90 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_acc_feel_phi_est <- round(h_acc_feel_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_acc_feel_phi_90 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_acc_feel_zoi_est <- round(h_acc_feel_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_acc_feel_zoi_90 <- paste0(
+  "[",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_acc_feel_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_otherUnderstand_mu_est <- round(h_otherUnderstand_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_otherUnderstand_mu_90 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_otherUnderstand_coi_est <- round(h_otherUnderstand_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_otherUnderstand_coi_90 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_otherUnderstand_phi_est <- round(h_otherUnderstand_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_otherUnderstand_phi_90 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_otherUnderstand_zoi_est <- round(h_otherUnderstand_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_otherUnderstand_zoi_90 <- paste0(
+  "[",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_otherUnderstand_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+cri_privacy_mu_est <- round(h_privacy_zoib_bp_90$hypothesis$Estimate[[1]], round_n)
+cri_privacy_mu_90 <- paste0(
+  "[",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Lower[[1]], round_n),
+  ", ",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Upper[[1]], round_n),
+  "]"
+)
+cri_privacy_coi_est <- round(h_privacy_zoib_bp_90$hypothesis$Estimate[[2]], round_n)
+cri_privacy_coi_90 <- paste0(
+  "[",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Lower[[2]], round_n),
+  ", ",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Upper[[2]], round_n),
+  "]"
+)
+cri_privacy_phi_est <- round(h_privacy_zoib_bp_90$hypothesis$Estimate[[3]], round_n)
+cri_privacy_phi_90 <- paste0(
+  "[",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Lower[[3]], round_n),
+  ", ",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Upper[[3]], round_n),
+  "]"
+)
+cri_privacy_zoi_est <- round(h_privacy_zoib_bp_90$hypothesis$Estimate[[4]], round_n)
+cri_privacy_zoi_90 <- paste0(
+  "[",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Lower[[4]], round_n),
+  ", ",
+  round(h_privacy_zoib_bp_90$hypothesis$CI.Upper[[4]], round_n),
+  "]"
+)
+
+
+t <- tribble(
+  ~model, ~mu, ~mu90, ~coi, ~coi90, ~phi, ~phi90, ~zoi, ~zoi90,
+  "articulate", cri_articulate_mu_est, cri_articulate_mu_90, cri_articulate_coi_est, cri_articulate_coi_90, cri_articulate_phi_est, cri_articulate_phi_90, cri_articulate_zoi_est, cri_articulate_zoi_90,
+  "difficult", cri_difficult_mu_est, cri_difficult_mu_90, cri_difficult_coi_est, cri_difficult_coi_90, cri_difficult_phi_est, cri_difficult_phi_90, cri_difficult_zoi_est, cri_difficult_zoi_90,
+  "valuable", cri_valuable_mu_est, cri_valuable_mu_90, cri_valuable_coi_est, cri_valuable_coi_90, cri_valuable_phi_est, cri_valuable_phi_90, cri_valuable_zoi_est, cri_valuable_zoi_90,
+  # "feelingChange", cri_feelingChange_mu_est, cri_feelingChange_mu_90, cri_feelingChange_coi_est, cri_feelingChange_coi_90, cri_feelingChange_phi_est, cri_feelingChange_phi_90, cri_feelingChange_zoi_est, cri_feelingChange_zoi_90,
+  "recommend", cri_recommend_mu_est, cri_recommend_mu_90, cri_recommend_coi_est, cri_recommend_coi_90, cri_recommend_phi_est, cri_recommend_phi_90, cri_recommend_zoi_est, cri_recommend_zoi_90,
+  "acc_obj", cri_acc_obj_mu_est, cri_acc_obj_mu_90, cri_acc_obj_coi_est, cri_acc_obj_coi_90, cri_acc_obj_phi_est, cri_acc_obj_phi_90, cri_acc_obj_zoi_est, cri_acc_obj_zoi_90,
+  "acc_feel", cri_acc_feel_mu_est, cri_acc_feel_mu_90, cri_acc_feel_coi_est, cri_acc_feel_coi_90, cri_acc_feel_phi_est, cri_acc_feel_phi_90, cri_acc_feel_zoi_est, cri_acc_feel_zoi_90,
+  "otherUnderstand", cri_otherUnderstand_mu_est, cri_otherUnderstand_mu_90, cri_otherUnderstand_coi_est, cri_otherUnderstand_coi_90, cri_otherUnderstand_phi_est, cri_otherUnderstand_phi_90, cri_otherUnderstand_zoi_est, cri_otherUnderstand_zoi_90,
+  "privacy", cri_privacy_mu_est, cri_privacy_mu_90, cri_privacy_coi_est, cri_privacy_coi_90, cri_privacy_phi_est, cri_privacy_phi_90, cri_privacy_zoi_est, cri_privacy_zoi_90
+)
+
+view(t)
+
+t %>% 
+  write_csv("~/Downloads/zoib_table_bp.csv")
+```
+
+
+Beta table
+===
+```{r}
+h_form_lower <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) < 0"
+)
+h_form_higher <- c(
+  "mu" = "plogis(Intercept + methodbot) - plogis(Intercept) > 0"
+)
+round_n <- 2
+format_ci <- function(h, digits=round_n, h_idx=1) {
+  paste0(
+    "[",
+    formatC(h$hypothesis$CI.Lower[[h_idx]]*100, digits=digits, format="f"),
+    ", ",
+    formatC(h$hypothesis$CI.Upper[[h_idx]]*100, digits=digits, format="f"),
+    "]"
+  )
+}
+
+(h_articulate_bp_95 <- hypothesis(fit_articulate_bp_beta, h_form_lower, alpha=.05))
+(h_difficult_bp_95 <- hypothesis(fit_difficult_bp_beta, h_form_higher, alpha=.05))
+(h_valuable_bp_95 <- hypothesis(fit_valuable_bp_beta, h_form_lower, alpha=.05))
+# (h_feelingChange_bp_95 <- hypothesis(fit_feelingChange_bp_beta, h_form_lower, alpha=.05))
+(h_recommend_bp_95 <- hypothesis(fit_recommend_bp_beta, h_form_lower, alpha=.05))
+(h_acc_obj_bp_95 <- hypothesis(fit_acc_obj_bp_beta, h_form_lower, alpha=.05))
+(h_acc_feel_bp_95 <- hypothesis(fit_acc_feel_bp_beta, h_form_lower, alpha=.05))
+(h_otherUnderstand_bp_95 <- hypothesis(fit_otherUnderstand_bp_beta, h_form_lower, alpha=.05))
+(h_privacy_bp_95 <- hypothesis(fit_privacy_bp_beta, h_form_higher, alpha=.05))
+
+t <- tribble(
+  ~model, ~mu, ~mu95,
+  "articulate", h_articulate_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_articulate_bp_95),
+  "difficult", h_difficult_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_difficult_bp_95),
+  "valuable", h_valuable_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_valuable_bp_95),
+  # "feelingChange", h_feelingChange_bp_95$hypothesis$Estimate[[1]], format_ci(h_feelingChange_bp_95),
+  "recommend", h_recommend_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_recommend_bp_95),
+  "acc_obj", h_acc_obj_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_acc_obj_bp_95),
+  "acc_feel", h_acc_feel_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_acc_feel_bp_95),
+  "otherUnderstand", h_otherUnderstand_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_otherUnderstand_bp_95),
+  "privacy", h_privacy_bp_95$hypothesis$Estimate[[1]]*100, format_ci(h_privacy_bp_95)
+) %>% 
+  mutate(mu = formatC(mu, digits=round_n, format="f"))
+
+view(t)
+t %>% 
+  write_csv("~/Downloads/beta_table_bp.csv")
+```
+
+
+Beta model figure
+===
+```{r}
+form_articulate = plogis(as_draws_df(fit_articulate_bp_beta)$b_Intercept)
+bot_articulate = plogis(as_draws_df(fit_articulate_bp_beta)$b_Intercept + as_draws_df(fit_articulate_bp_beta)$b_methodbot)
+
+form_difficult = plogis(as_draws_df(fit_difficult_bp_beta)$b_Intercept)
+bot_difficult = plogis(as_draws_df(fit_difficult_bp_beta)$b_Intercept + as_draws_df(fit_difficult_bp_beta)$b_methodbot)
+
+form_valuable = plogis(as_draws_df(fit_valuable_bp_beta)$b_Intercept)
+bot_valuable = plogis(as_draws_df(fit_valuable_bp_beta)$b_Intercept + as_draws_df(fit_valuable_bp_beta)$b_methodbot)
+
+form_recommend = plogis(as_draws_df(fit_recommend_bp_beta)$b_Intercept)
+bot_recommend = plogis(as_draws_df(fit_recommend_bp_beta)$b_Intercept + as_draws_df(fit_recommend_bp_beta)$b_methodbot)
+
+form_acc_obj = plogis(as_draws_df(fit_acc_obj_bp_beta)$b_Intercept)
+bot_acc_obj = plogis(as_draws_df(fit_acc_obj_bp_beta)$b_Intercept + as_draws_df(fit_acc_obj_bp_beta)$b_methodbot)
+
+form_acc_feel = plogis(as_draws_df(fit_acc_feel_bp_beta)$b_Intercept)
+bot_acc_feel = plogis(as_draws_df(fit_acc_feel_bp_beta)$b_Intercept + as_draws_df(fit_acc_feel_bp_beta)$b_methodbot)
+
+form_otherUnderstand = plogis(as_draws_df(fit_otherUnderstand_bp_beta)$b_Intercept)
+bot_otherUnderstand = plogis(as_draws_df(fit_otherUnderstand_bp_beta)$b_Intercept + as_draws_df(fit_otherUnderstand_bp_beta)$b_methodbot)
+
+form_privacy = plogis(as_draws_df(fit_privacy_bp_beta)$b_Intercept)
+bot_privacy = plogis(as_draws_df(fit_privacy_bp_beta)$b_Intercept + as_draws_df(fit_privacy_bp_beta)$b_methodbot)
+
+df_plot_form <- tribble(
+  ~model, ~est, ~hdi_hi, ~hdi_lo,
+  "articulate", median(form_articulate), hdi(form_articulate, .95)[[2]], hdi(form_articulate, .95)[[1]],
+  "difficult", median(form_difficult), hdi(form_difficult, .95)[[2]], hdi(form_difficult, .95)[[1]],
+  "valuable", median(form_valuable), hdi(form_valuable, .95)[[2]], hdi(form_valuable, .95)[[1]],
+  "recommend", median(form_recommend), hdi(form_recommend, .95)[[2]], hdi(form_recommend, .95)[[1]],
+  "acc_obj", median(form_acc_obj), hdi(form_acc_obj, .95)[[2]], hdi(form_acc_obj, .95)[[1]],
+  "acc_feel", median(form_acc_feel), hdi(form_acc_feel, .95)[[2]], hdi(form_acc_feel, .95)[[1]],
+  "otherUnderstand", median(form_otherUnderstand), hdi(form_otherUnderstand, .95)[[2]], hdi(form_otherUnderstand, .95)[[1]],
+  "privacy", median(form_privacy), hdi(form_privacy, .95)[[2]], hdi(form_privacy, .95)[[1]]
+)
+df_plot_bot <- tribble(
+  ~model, ~est, ~hdi_hi, ~hdi_lo,
+  "articulate", median(bot_articulate), hdi(bot_articulate, .95)[[2]], hdi(bot_articulate, .95)[[1]],
+  "difficult", median(bot_difficult), hdi(bot_difficult, .95)[[2]], hdi(bot_difficult, .95)[[1]],
+  "valuable", median(bot_valuable), hdi(bot_valuable, .95)[[2]], hdi(bot_valuable, .95)[[1]],
+  "recommend", median(bot_recommend), hdi(bot_recommend, .95)[[2]], hdi(bot_recommend, .95)[[1]],
+  "acc_obj", median(bot_acc_obj), hdi(bot_acc_obj, .95)[[2]], hdi(bot_acc_obj, .95)[[1]],
+  "acc_feel", median(bot_acc_feel), hdi(bot_acc_feel, .95)[[2]], hdi(bot_acc_feel, .95)[[1]],
+  "otherUnderstand", median(bot_otherUnderstand), hdi(bot_otherUnderstand, .95)[[2]], hdi(bot_otherUnderstand, .95)[[1]],
+  "privacy", median(bot_privacy), hdi(bot_privacy, .95)[[2]], hdi(bot_privacy, .95)[[1]]
+)
+df_plot <- bind_rows(df_plot_form %>% mutate(condition = "form"),
+                     df_plot_bot %>% mutate(condition = "bot")) %>% 
+  mutate(model = case_when(
+    model == "articulate" ~ "Helpful in \narticulating",
+    model == "difficult" ~ "Difficult to\n respond",
+    model == "valuable" ~ "Valuable \nfor youth",
+    model == "recommend" ~ "Would \nRecommend",
+    model == "acc_obj" ~ "Accurate \ncapturing \nsituation",
+    model == "acc_feel" ~ "Accurate \ncapturing\n feelings",
+    model == "otherUnderstand" ~ "Others would \nunderstand \nexperience",
+    model == "privacy" ~ "Privacy \nconcerns"
+  )) %>% 
+  mutate(model = fct_reorder(model, est, .desc=T)) 
+
+df_plot %>% 
+  ggplot(aes(x = model, y = est, ymin = hdi_lo, ymax = hdi_hi, color=condition)) +
+  geom_pointrange(position = position_dodge(width = .5)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  # coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(
+    x = "",
+    y = "μ of estimated beta distribution",
+    fill = "Condition"
+  ) +
+  # multiply the y-axis by 100 but not percent format
+  scale_y_continuous(labels = scales::number_format(scale = 1e2),
+                     limits = c(0,1)) +
+  # rotate x axis labels and make text bigger
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10)) 
+
+ggsave("~/Downloads/beta_plot_bp.png", width=8, height=6, dpi=300, bg="white")
+```
+
+
+
+
+Ease of capturing what you wanted
+===
+```{r}
+
+df_survey_bp %>% 
+  ggplot(aes(x = easeCapture_compare)) + 
+  geom_histogram()
+
+
+df_survey_bp %>% 
+  summarize(
+    mean = mean(easeCapture_compare, na.rm = TRUE),
+    sd = sd(easeCapture_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(easeCapture_compare > 0, na.rm = TRUE),
+  )
+```
+> bot much easier
+
+Bayesian logit
+---
+```{r}
+d <- df_survey_bp %>% 
+  mutate(easeCapture_formEasier = case_when(
+    easeCapture_compare > 0 ~ 0,
+    easeCapture_compare < 0 ~ 1,
+    TRUE ~ NA_real_
+  ))
+
+d$easeCapture_formEasier %>% table(useNA = "always")
+
+fit_easeCapture_logistic <- d %>% 
+  brm(easeCapture_formEasier ~ 1, 
+      data = ., 
+      family = bernoulli(link = "logit"),
+      chains = 4,
+      cores = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_easeCapture_logistic.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_easeCapture_logistic)
+summary(fit_easeCapture_logistic)
+
+easeCapture_intercept <- as_draws_df(fit_easeCapture_logistic)$b_Intercept
+mean(1/exp(easeCapture_intercept)) # inverse because I coded form as 1
+hdi(1/exp(easeCapture_intercept), .95)
+mean(plogis(easeCapture_intercept))
+
+```
+
+Appropriate for youth
+===
+```{r}
+df_survey_bp %>% 
+  ggplot(aes(x = forYouth_compare)) +
+  geom_histogram()
+
+df_survey_bp %>% 
+  summarize(
+    mean = mean(forYouth_compare, na.rm = TRUE),
+    sd = sd(forYouth_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(forYouth_compare > 0, na.rm = TRUE),
+  )
+```
+> bot more appropriate
+
+Bayesian logit
+---
+```{r}
+d <- df_survey_bp %>% 
+  mutate(forYouth_formMoreAppropriate = case_when(
+    forYouth_compare > 0 ~ 0,
+    forYouth_compare < 0 ~ 1,
+    TRUE ~ NA_real_
+  ))
+
+d$forYouth_formMoreAppropriate %>% table(useNA="always")
+
+fit_forYouth_logistic <- d %>% 
+  brm(forYouth_formMoreAppropriate ~ 1, 
+      data = ., 
+      family = bernoulli(link = "logit"),
+      chains = 4,
+      cores = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_forYouth_logistic.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_forYouth_logistic)
+summary(fit_forYouth_logistic)
+
+forYouth_intercept <- as_draws_df(fit_forYouth_logistic)$b_Intercept
+mean(1/exp(forYouth_intercept)) # inverse because I coded form as 1
+hdi(1/exp(forYouth_intercept), .95)
+
+```
+
+
+Sense making
+===
+```{r}
+df_survey_bp %>% 
+  ggplot(aes(x = senseMaking_compare)) +
+  geom_histogram()
+
+df_survey_bp %>% 
+  summarize(
+    mean = mean(senseMaking_compare, na.rm = TRUE),
+    sd = sd(senseMaking_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(senseMaking_compare > 0, na.rm = TRUE),
+  )
+```
+> bot better
+
+
+Bayesian logit
+---
+```{r}
+d <- df_survey_bp %>% 
+  mutate(senseMaking_formHigher = case_when(
+    senseMaking_compare > 0 ~ 0,
+    senseMaking_compare < 0 ~ 1,
+    TRUE ~ NA_real_
+  ))
+
+d$senseMaking_formHigher %>% table(useNA="always")
+
+fit_senseMaking_logistic <- d %>% 
+  brm(senseMaking_formHigher ~ 1, 
+      data = ., 
+      family = bernoulli(link = "logit"),
+      chains = 4,
+      cores = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_senseMaking_logistic.rds",
+      file_refit = "on_change"
+  )
+pp_check(fit_senseMaking_logistic)
+summary(fit_senseMaking_logistic)
+
+senseMaking_intercept <- as_draws_df(fit_senseMaking_logistic)$b_Intercept
+mean(1/exp(senseMaking_intercept)) # inverse because I coded form as 1
+hdi(1/exp(senseMaking_intercept), .95)
+
+```
+
+Captured your voice
+===
+```{r}
+
+df_survey_bp %>% 
+  ggplot(aes(x = captureVoice_compare)) +
+  geom_histogram()
+
+df_survey_bp %>% 
+  summarize(
+    mean = mean(captureVoice_compare, na.rm = TRUE),
+    sd = sd(captureVoice_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(captureVoice_compare > 0, na.rm = TRUE),
+  )
+```
+> bot captures voice
+
+Bayesian logit
+---
+```{r}
+d <- df_survey_bp %>% 
+  mutate(captureVoice_formHigher = case_when(
+    captureVoice_compare > 0 ~ 0,
+    captureVoice_compare < 0 ~ 1,
+    TRUE ~ NA_real_
+  ))
+
+d$captureVoice_formHigher %>% table(useNA="always")
+
+fit_captureVoice_logistic <- d %>% 
+  brm(captureVoice_formHigher ~ 1, 
+      data = ., 
+      family = bernoulli(link = "logit"),
+      chains = 4,
+      cores = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_captureVoice_logistic.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_captureVoice_logistic)
+summary(fit_captureVoice_logistic)
+
+captureVoice_intercept <- as_draws_df(fit_captureVoice_logistic)$b_Intercept
+mean(1/exp(captureVoice_intercept)) # inverse because I coded form as 1
+hdi(1/exp(captureVoice_intercept), .95)
+
+```
+
+
+
+Helped address problem
+===
+
+```{r}
+
+df_survey_bp %>% 
+  ggplot(aes(x = probSolve_compare)) +
+  geom_histogram()
+
+hist(df_survey$probSolve_compare)
+
+df_survey_bp %>% 
+  summarize(
+    mean = mean(probSolve_compare, na.rm = TRUE),
+    sd = sd(probSolve_compare, na.rm = TRUE),
+    n = n(),
+    pr_bot_higher = mean(probSolve_compare > 0, na.rm = TRUE),
+  )
+```
+> bot helped
+
+Bayesian logit
+---
+```{r}
+d <- df_survey_bp %>% 
+  mutate(probSolve_formHigher = case_when(
+    probSolve_compare > 0 ~ 0,
+    probSolve_compare < 0 ~ 1,
+    TRUE ~ NA_real_
+  ))
+
+d$probSolve_formHigher %>% table(useNA="always")
+
+fit_probSolve_logistic <- d %>% 
+  brm(probSolve_formHigher ~ 1, 
+      data = ., 
+      family = bernoulli(link = "logit"),
+      chains = 4,
+      cores = 4,
+      iter = 5000,
+      warmup = 1000,
+      file = "models/fit_probSolve_logistic.rds",
+      file_refit = "on_change"
+  )
+
+pp_check(fit_probSolve_logistic)
+summary(fit_probSolve_logistic)
+
+probSolve_intercept <- as_draws_df(fit_probSolve_logistic)$b_Intercept
+mean(1/exp(probSolve_intercept)) # inverse because I coded form as 1
+hdi(1/exp(probSolve_intercept), .95)
+
+```
+
+
+Logistic table
+===
+```{r}
+
+round_n <- 2
+
+or_easeCapture <- round(median(1/exp(easeCapture_intercept)), round_n)
+or_forYouth <- round(median(1/exp(forYouth_intercept)), round_n)
+or_senseMaking <- round(median(1/exp(senseMaking_intercept)), round_n)
+or_captureVoice <- round(median(1/exp(captureVoice_intercept)), round_n)
+or_probSolve <- round(median(1/exp(probSolve_intercept)), round_n)
+
+cri_easeCapture <- paste0(
+  "[",
+  round(hdi(1/exp(easeCapture_intercept), .95)[1], round_n),
+  ", ",
+  round(hdi(1/exp(easeCapture_intercept), .95)[2], round_n),
+  "]"
+)
+cri_forYouth <- paste0(
+  "[",
+  round(hdi(1/exp(forYouth_intercept), .95)[1], round_n),
+  ", ",
+  round(hdi(1/exp(forYouth_intercept), .95)[2], round_n),
+  "]"
+)
+cri_senseMaking <- paste0(
+  "[",
+  round(hdi(1/exp(senseMaking_intercept), .95)[1], round_n),
+  ", ",
+  round(hdi(1/exp(senseMaking_intercept), .95)[2], round_n),
+  "]"
+)
+cri_captureVoice <- paste0(
+  "[",
+  round(hdi(1/exp(captureVoice_intercept), .95)[1], round_n),
+  ", ",
+  round(hdi(1/exp(captureVoice_intercept), .95)[2], round_n),
+  "]"
+)
+cri_probSolve <- paste0(
+  "[",
+  round(hdi(1/exp(probSolve_intercept), .95)[1], round_n),
+  ", ",
+  round(hdi(1/exp(probSolve_intercept), .95)[2], round_n),
+  "]"
+)
+
+t <- tribble(
+  ~model, ~or, ~ci,
+  "easeCapture", or_easeCapture, cri_easeCapture,
+  "forYouth", or_forYouth, cri_forYouth,
+  "senseMaking", or_senseMaking, cri_senseMaking,
+  "captureVoice", or_captureVoice, cri_captureVoice,
+  "probSolve", or_probSolve, cri_probSolve
+)
+
+
+t %>% 
+  write_csv("~/Downloads/logistic_table.csv")
+
+```
+
 
 
 

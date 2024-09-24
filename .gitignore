@@ -29,3 +29,10 @@ Thumbs.db
 ## ignore any tracing files! 
 ls_*
 .Rproj.user
+
+**/*.pdf
+**/*.docx
+**/*.csv
+data/
+data/raw/prolific_chatbot_data.json
+**/*.rds
