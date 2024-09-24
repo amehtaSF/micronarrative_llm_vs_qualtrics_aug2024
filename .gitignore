@@ -36,3 +36,4 @@ ls_*
 data/
 data/raw/prolific_chatbot_data.json
 **/*.rds
+.RData
