@@ -134,7 +134,7 @@ def getData (testing = False ):
             # show that the message was accepted 
             st.chat_message("human").write(prompt)
             msg = {"role": "human", "content": prompt}
-            append_list_entry(st.session_state["chat_id"], "interview_chat", msg)
+            # append_list_entry(st.session_state["chat_id"], "interview_chat", msg)
             
             
             # generate the reply using langchain 
@@ -152,7 +152,7 @@ def getData (testing = False ):
             else:
                 st.chat_message("ai").write(response["response"])
                 msg = {"role": "assistant", "content": response["response"]}
-                append_list_entry(st.session_state["chat_id"], "interview_chat", msg)
+                # append_list_entry(st.session_state["chat_id"], "interview_chat", msg)
 
  
         
@@ -278,9 +278,9 @@ def summariseData(testing = False):
     # pick the prompt we want to use (counterbalance order)
     prompt_type_1, prompt_type_2, prompt_type_3 = random.sample(['formal', 'youngsib', 'friend'], 3)
     prompt_1, prompt_2, prompt_3 = prompts[prompt_type_1], prompts[prompt_type_2], prompts[prompt_type_3]
-    update_db_entry(st.session_state["chat_id"], "prompt_type_1", prompt_type_1)
-    update_db_entry(st.session_state["chat_id"], "prompt_type_2", prompt_type_2)
-    update_db_entry(st.session_state["chat_id"], "prompt_type_3", prompt_type_3)
+    # update_db_entry(st.session_state["chat_id"], "prompt_type_1", prompt_type_1)
+    # update_db_entry(st.session_state["chat_id"], "prompt_type_2", prompt_type_2)
+    # update_db_entry(st.session_state["chat_id"], "prompt_type_3", prompt_type_3)
     
     
     
@@ -392,9 +392,9 @@ def summariseData(testing = False):
     st.button("I'm ready -- show me!", key = 'progressButton')
     
     # Save scenario proposals to the database
-    update_db_entry(st.session_state["chat_id"], "scenario_1", st.session_state.response_1['output_scenario'])
-    update_db_entry(st.session_state["chat_id"], "scenario_2", st.session_state.response_2['output_scenario'])
-    update_db_entry(st.session_state["chat_id"], "scenario_3", st.session_state.response_3['output_scenario'])
+    # update_db_entry(st.session_state["chat_id"], "scenario_1", st.session_state.response_1['output_scenario'])
+    # update_db_entry(st.session_state["chat_id"], "scenario_2", st.session_state.response_2['output_scenario'])
+    # update_db_entry(st.session_state["chat_id"], "scenario_3", st.session_state.response_3['output_scenario'])
 
 
 def testing_reviewSetUp():
@@ -425,7 +425,7 @@ def click_selection_yes(button_num, scenario):
     st.session_state.scenario_selection = button_num
     
     # Save scenario choice to the database
-    update_db_entry(st.session_state["chat_id"], "scenario_choice", button_num)
+    # update_db_entry(st.session_state["chat_id"], "scenario_choice", button_num)
     
     ## if we are testing, the answer_set might not have been set & needs to be added:
     if 'answer_set' not in st.session_state:
@@ -444,21 +444,22 @@ def click_selection_yes(button_num, scenario):
     
     # Save thumbs and optional text to the database
     
-    update_db_entry(st.session_state["chat_id"], "thumb_1", scenario_dict['fb1'])
-    update_db_entry(st.session_state["chat_id"], "thumb_2", scenario_dict['fb2'])
-    update_db_entry(st.session_state["chat_id"], "thumb_3", scenario_dict['fb3'])
-    # update_db_entry(st.session_state["chat_id"], "thumb_1_text", st.session_state['col1_fb']['text'])
+    # update_db_entry(st.session_state["chat_id"], "thumb_1", scenario_dict['fb1'])
+    # update_db_entry(st.session_state["chat_id"], "thumb_2", scenario_dict['fb2'])
+    # update_db_entry(st.session_state["chat_id"], "thumb_3", scenario_dict['fb3'])
+    # # update_db_entry(st.session_state["chat_id"], "thumb_1_text", st.session_state['col1_fb']['text'])
     # update_db_entry(st.session_state["chat_id"], "thumb_2_text", st.session_state['col2_fb']['text'])
     # update_db_entry(st.session_state["chat_id"], "thumb_3_text", st.session_state['col3_fb']['text'])
 
-    update_db_entry(st.session_state["chat_id"], "scenario_rating", st.session_state['scenario_decision'])
+    # update_db_entry(st.session_state["chat_id"], "scenario_rating", st.session_state['scenario_decision'])
     
     st.session_state.scenario_package = {
             'scenario': scenario,
             'answer set':  st.session_state['answer_set'],
             'judgment': st.session_state['scenario_decision'],
             'scenarios_all': scenario_dict,
-            'chat history': msgs
+            'chat history': msgs,
+            'adaptation_list': []
     }
 
 
@@ -503,8 +504,8 @@ def scenario_selection (popover, button_num, scenario):
 
         scenario_rating = st.select_slider("Judge_scenario", label_visibility= 'hidden', key = slider_name, options = sliderOptions, on_change= sliderChange, args = (slider_name,))
         # update_db_entry(st.session_state["chat_id"], "scenario_rating", scenario_rating)
-        if scenario_rating == "Ready as is!":
-            update_db_entry(st.session_state["chat_id"], "final_scenario", scenario)
+        # if scenario_rating == "Ready as is!":
+            # update_db_entry(st.session_state["chat_id"], "final_scenario", scenario)
             
         
 
@@ -667,8 +668,22 @@ def finaliseScenario():
         st.markdown("")
         st.markdown(f":green[{package['scenario']}]")
         
-        # Save the final accepted scenario to the database
-        update_db_entry(st.session_state["chat_id"], "final_scenario", package['scenario'])
+        ### ASHISH -- this is the one place where we would just need to update the database with the final package -- st.session_state['scenario_package'] -- which should contain all the information we would need.  
+        # 
+        #  This is originally created in the click_selection_yes function; and is then updated as we go along. The structure of this is as follows: 
+
+            # st.session_state.scenario_package = {
+                # 'scenario': scenario,    <- final scenario
+                # 'answer set':  st.session_state['answer_set'],   <- the extracted data
+                # 'judgment': st.session_state['scenario_decision'],  <-- 'ready as is' 
+                # 'scenarios_all': scenario_dict,  <-- three original scenarios 
+                # 'chat history': msgs     <-- all of the initial chat history 
+                # 'adaptation_list': []   <-- list of adaptations made to the scenario 
+            # }
+
+        
+        
+
         
     
     
@@ -709,8 +724,10 @@ def finaliseScenario():
                     # st.write(new_response)
 
                 st.markdown(f"Here is the adapted response: \n :orange[{new_response['new_scenario']}]\n\n **what do you think?**")
-                append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "assistant", "content": new_response['new_scenario']})
+                # append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "assistant", "content": new_response['new_scenario']})
                 
+                ## save the adaptation step into the package: 
+                st.scenario_package['adaptation_list'].append([prompt, new_response['new_scenario']])
                
               
                 c1, c2  = st.columns(2)
