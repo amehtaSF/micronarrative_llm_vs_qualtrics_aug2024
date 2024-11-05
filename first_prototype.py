@@ -53,6 +53,8 @@ st.title("📖 Study bot")
 
 
 
+#### ASHISH -- I expect that this will need to change / be adapted a little bit based on the changes below? 
+
 def make_chat_id():
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
     if "pid" in st.query_params:
@@ -60,7 +62,7 @@ def make_chat_id():
     else:
         prolific_id = '00000'
     chat_id = f'{prolific_id}-{ts}'
-    create_entry(chat_id, prolific_id)  # create a new entry in the database
+    create_entry(chat_id, prolific_id)  # create a new entry in the database  << -- check?   
     return chat_id
 
 if "chat_id" not in st.session_state:
@@ -706,7 +708,7 @@ def finaliseScenario():
             # once user enters something 
             if prompt:
                 st.chat_message("human").write(prompt) 
-                append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "human", "content": prompt})
+                # append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "human", "content": prompt})
 
                 # use a new chain, drawing on the prompt_adaptation template from lc_prompts.py
                 adaptation_prompt = PromptTemplate(input_variables=["input", "scenario"], template = prompt_adaptation)
