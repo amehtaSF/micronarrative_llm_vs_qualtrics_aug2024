@@ -11,6 +11,7 @@ from langsmith import traceable
 from langsmith.run_helpers import get_current_run_tree
 from streamlit_feedback import streamlit_feedback
 import boto3
+from botocore.exceptions import ClientError
 import random
 from datetime import datetime
 
@@ -39,7 +40,18 @@ os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
 os.environ["LANGCHAIN_API_KEY"] = st.secrets['LANGCHAIN_API_KEY']
 os.environ["LANGCHAIN_PROJECT"] = st.secrets['LANGCHAIN_PROJECT']
 os.environ["LANGCHAIN_TRACING_V2"] = 'true'
+os.environ["AWS_ACCESS_KEY_ID"] = st.secrets['AWS_ACCESS_KEY_ID']
+os.environ["AWS_SECRET_ACCESS_KEY"] = st.secrets['AWS_SECRET_ACCESS_KEY']
+os.environ["AWS_DEFAULT_REGION"] = st.secrets['AWS_DEFAULT_REGION']
 
+# Initialize table
+dynamodb = boto3.resource(
+    'dynamodb',
+    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+    region_name=os.environ["AWS_DEFAULT_REGION"]
+)
+table = dynamodb.Table('petr_micronarrative_nov2024')
 
 ## simple switch previously used to help debug 
 DEBUG = False
@@ -54,6 +66,7 @@ st.title("📖 Study bot")
 
 
 #### ASHISH -- I expect that this will need to change / be adapted a little bit based on the changes below? 
+# I don't think so as long as there is a variable called pid in the query parameter string (i.e in the url)
 
 def make_chat_id():
     ts = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -62,7 +75,6 @@ def make_chat_id():
     else:
         prolific_id = '00000'
     chat_id = f'{prolific_id}-{ts}'
-    create_entry(chat_id, prolific_id)  # create a new entry in the database  << -- check?   
     return chat_id
 
 if "chat_id" not in st.session_state:
@@ -660,6 +672,7 @@ def finaliseScenario():
 
     # grab a 'local' copy of the package collected in the previous flow
     package = st.session_state['scenario_package']
+    package['chat_id'] = st.session_state['chat_id']
 
     # if scenario is judged as 'ready' by the user -- we're done
     if package['judgment'] == "Ready as is!":
@@ -670,6 +683,10 @@ def finaliseScenario():
         st.markdown("")
         st.markdown(f":green[{package['scenario']}]")
         
+        table.put_item(
+            Item=package
+        )
+            
         ### ASHISH -- this is the one place where we would just need to update the database with the final package -- st.session_state['scenario_package'] -- which should contain all the information we would need.  
         # 
         #  This is originally created in the click_selection_yes function; and is then updated as we go along. The structure of this is as follows: 
@@ -682,6 +699,9 @@ def finaliseScenario():
                 # 'chat history': msgs     <-- all of the initial chat history 
                 # 'adaptation_list': []   <-- list of adaptations made to the scenario 
             # }
+
+        
+            
 
         
         
