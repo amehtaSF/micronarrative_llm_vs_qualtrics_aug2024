@@ -74,11 +74,12 @@ def make_chat_id():
         prolific_id = st.query_params["pid"]
     else:
         prolific_id = '00000'
-    chat_id = f'{prolific_id}-{ts}'
+    chat_id = f'{prolific_id}'
     return chat_id
 
 if "chat_id" not in st.session_state:
     st.session_state["chat_id"] = make_chat_id()
+    st.session_state["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
 init_state = {
     "run_id": None,
@@ -673,6 +674,7 @@ def finaliseScenario():
     # grab a 'local' copy of the package collected in the previous flow
     package = st.session_state['scenario_package']
     package['chat_id'] = st.session_state['chat_id']
+    package['timestamp'] = st.session_state['timestamp']
 
     # if scenario is judged as 'ready' by the user -- we're done
     if package['judgment'] == "Ready as is!":
