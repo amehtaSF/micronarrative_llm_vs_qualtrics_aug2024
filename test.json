@@ -1,0 +1,97 @@
+[
+    {
+        "judgment": "Ready as is!",
+        "scenarios_all": {
+            "col2": "The other day, I was scrolling through my feed and came across a post about Trump. It hit me hard for some reason, and I just felt this wave of sadness wash over me. I couldn't really pinpoint why it affected me so much, but it did. The whole thing just felt like a heavy cloud hanging over my day, and I couldn't shake it off. It was one of those moments where everything just felt off, and I couldn't find a way to make it better.",
+            "fb1": null,
+            "col3": "The other day, I stumbled across a post about Trump while scrolling through social media. It was one of those moments where you just feel a wave of sadness hit you. There wasn't much more to it, but the whole thing just felt like a downer. Honestly, the entire experience was just the worst.",
+            "fb3": null,
+            "col1": "Lately, I've been feeling a bit overwhelmed by the content I come across on social media. One day, while scrolling through my feed, I stumbled upon a post about Trump. It caught me off guard and left me feeling really sad. I couldn't quite pinpoint why it affected me so much, but it just did. The whole experience was just a downer, and it felt like everything about it was the worst. It's moments like these that make me question my time spent online.",
+            "fb2": null
+        },
+        "adaptation_list": [
+            [
+                "sad",
+                "Lately, I've been feeling a bit overwhelmed by the content I come across on social media. One day, while scrolling through my feed, I stumbled upon a post about a cute puppy. It caught me off guard and left me feeling really happy. I couldn't quite pinpoint why it affected me so much, but it just did. The whole experience was just uplifting, and it felt like everything about it was the best. It's moments like these that make me appreciate my time spent online."
+            ]
+        ],
+        "scenario": "Lately, I've been feeling a bit overwhelmed by the content I come across on social media. One day, while scrolling through my feed, I stumbled upon a post about a cute puppy. It caught me off guard and left me feeling really happy. I couldn't quite pinpoint why it affected me so much, but it just did. The whole experience was just uplifting, and it felt like everything about it was the best. It's moments like these that make me appreciate my time spent online.",
+        "chat_history": [
+            [
+                "ai",
+                "Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. \n\n I'll start with a general question and then we'll move to a specific situation you remember. \n\n  Let me know when you're ready! "
+            ],
+            [
+                "human",
+                "hi"
+            ],
+            [
+                "ai",
+                "Hi! Thanks for being willing to share your experience. Let's start with a general question: What do you find most challenging about your current social media use?"
+            ],
+            [
+                "human",
+                "too much use"
+            ],
+            [
+                "ai",
+                "I understand, it can be tough to manage the time spent on social media. Now, let's talk about a specific experience you've had. Can you tell me what happened? Specifically, what was said, posted, or done?"
+            ],
+            [
+                "human",
+                "saw a post about trump"
+            ],
+            [
+                "ai",
+                "Thanks for sharing that. Could you tell me a bit more about the post? What was it about, and how did it affect you?"
+            ],
+            [
+                "human",
+                "i hate turmp"
+            ],
+            [
+                "ai",
+                "I hear you, and it sounds like the post really stirred up some strong feelings. Can you share a bit more about the context? What else should we know about the situation?"
+            ],
+            [
+                "human",
+                "so sad"
+            ],
+            [
+                "ai",
+                "I'm sorry to hear that it made you feel sad. Could you tell me a bit more about why it made you feel that way or what was happening around that time?"
+            ],
+            [
+                "human",
+                "so sad"
+            ],
+            [
+                "ai",
+                "I understand that it made you feel really sad. If you're comfortable, could you share a bit more about how you reacted to the situation? How did it impact your day or your mood?"
+            ],
+            [
+                "human",
+                "i felt sad"
+            ],
+            [
+                "ai",
+                "Thank you for sharing that with me. It sounds like it was a tough experience. What would you say was the worst part of the situation for you?"
+            ],
+            [
+                "human",
+                "everything was worst"
+            ],
+            [
+                "ai",
+                "It sounds like the whole experience was really overwhelming for you. Thank you for sharing your story with me. If you ever want to talk more about it or need support, I'm here to help. \n\nFINISHED"
+            ]
+        ],
+        "answer set": {
+            "context": "null",
+            "what": "saw a post about trump",
+            "reaction": "everything was worst",
+            "outcome": "i felt sad"
+        },
+        "chat_id": "ashish1-20241109162015"
+    }
+]

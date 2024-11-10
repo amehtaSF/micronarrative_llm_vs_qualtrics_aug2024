@@ -472,7 +472,7 @@ def click_selection_yes(button_num, scenario):
             'answer set':  st.session_state['answer_set'],
             'judgment': st.session_state['scenario_decision'],
             'scenarios_all': scenario_dict,
-            'chat history': msgs,
+            'chat_history': msgs,
             'adaptation_list': []
     }
 
@@ -683,6 +683,7 @@ def finaliseScenario():
         st.markdown("")
         st.markdown(f":green[{package['scenario']}]")
         
+        package['chat_history'] = [(msg.type, msg.content) for msg in package['chat_history'].messages]
         table.put_item(
             Item=package
         )
@@ -696,7 +697,7 @@ def finaliseScenario():
                 # 'answer set':  st.session_state['answer_set'],   <- the extracted data
                 # 'judgment': st.session_state['scenario_decision'],  <-- 'ready as is' 
                 # 'scenarios_all': scenario_dict,  <-- three original scenarios 
-                # 'chat history': msgs     <-- all of the initial chat history 
+                # 'chat_history': msgs     <-- all of the initial chat_history 
                 # 'adaptation_list': []   <-- list of adaptations made to the scenario 
             # }
 
@@ -749,7 +750,7 @@ def finaliseScenario():
                 # append_list_entry(st.session_state["chat_id"], "editing_chat", {"role": "assistant", "content": new_response['new_scenario']})
                 
                 ## save the adaptation step into the package: 
-                st.scenario_package['adaptation_list'].append([prompt, new_response['new_scenario']])
+                st.session_state.scenario_package['adaptation_list'].append([prompt, new_response['new_scenario']])
                
               
                 c1, c2  = st.columns(2)
