@@ -15,9 +15,6 @@ from botocore.exceptions import ClientError
 import random
 from datetime import datetime
 
-from db import create_entry, get_entry, update_db_entry, append_list_entry
-
-
 
 
 from functools import partial
