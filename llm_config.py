@@ -31,7 +31,7 @@ class LLMConfig:
         for count, question in enumerate(data_collection["questions"]):
             questions_prompt += f"{count+1}. {question}\n"
 
-        questions_prompt += f"\nAsk each question one at a time. {data_collection['language_type']} "\
+        questions_prompt += f"\nAsk each question one at a time as it is stated above. You can connect it to what the person said before, but make sure to not change the wording of the question.  {data_collection['language_type']} "\
             "Ensure you get at least a basic answer to each question before moving to the next. "\
             "Never answer for the human. "\
             f"If you unsure what the human meant, ask again. {data_collection['topic_restriction']}"
