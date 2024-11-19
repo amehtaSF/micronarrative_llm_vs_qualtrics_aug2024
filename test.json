@@ -2,96 +2,84 @@
     {
         "judgment": "Ready as is!",
         "scenarios_all": {
-            "col2": "The other day, I was scrolling through my feed and came across a post about Trump. It hit me hard for some reason, and I just felt this wave of sadness wash over me. I couldn't really pinpoint why it affected me so much, but it did. The whole thing just felt like a heavy cloud hanging over my day, and I couldn't shake it off. It was one of those moments where everything just felt off, and I couldn't find a way to make it better.",
+            "col2": "Looking back on the situation, I remember feeling really sad. I didn't really have any specific thoughts about social media itself. I didn't respond in any particular way or seek support, and honestly, I didn't feel like I needed any support at the time. If a friend were to go through something similar, I would probably just tell them to do nothing, as that's what felt right for me.",
             "fb1": null,
-            "col3": "The other day, I stumbled across a post about Trump while scrolling through social media. It was one of those moments where you just feel a wave of sadness hit you. There wasn't much more to it, but the whole thing just felt like a downer. Honestly, the entire experience was just the worst.",
+            "col3": "Reflecting on a recent experience, I felt really sad. The situation didn't change my perspective on social media, nor did it prompt me to seek any support or respond in a particular way. I didn't feel like I needed any support at the time, and if a friend were to go through something similar, I wouldn't have any specific advice for them on how to respond.",
             "fb3": null,
-            "col1": "Lately, I've been feeling a bit overwhelmed by the content I come across on social media. One day, while scrolling through my feed, I stumbled upon a post about Trump. It caught me off guard and left me feeling really sad. I couldn't quite pinpoint why it affected me so much, but it just did. The whole experience was just a downer, and it felt like everything about it was the worst. It's moments like these that make me question my time spent online.",
+            "col1": "Reflecting on a recent situation, I found myself feeling profoundly sad. Despite the emotional impact, I did not have any particular thoughts about social media itself. I did not respond to the situation by seeking support or taking any specific actions. In terms of support, I did not identify any particular needs or desires for assistance. If a friend were to encounter a similar situation, I would not suggest any particular course of action for them to take.",
             "fb2": null
         },
-        "adaptation_list": [
-            [
-                "sad",
-                "Lately, I've been feeling a bit overwhelmed by the content I come across on social media. One day, while scrolling through my feed, I stumbled upon a post about a cute puppy. It caught me off guard and left me feeling really happy. I couldn't quite pinpoint why it affected me so much, but it just did. The whole experience was just uplifting, and it felt like everything about it was the best. It's moments like these that make me appreciate my time spent online."
-            ]
-        ],
-        "scenario": "Lately, I've been feeling a bit overwhelmed by the content I come across on social media. One day, while scrolling through my feed, I stumbled upon a post about a cute puppy. It caught me off guard and left me feeling really happy. I couldn't quite pinpoint why it affected me so much, but it just did. The whole experience was just uplifting, and it felt like everything about it was the best. It's moments like these that make me appreciate my time spent online.",
+        "timestamp": "2024-11-18 20:39:28",
+        "scenario": "Reflecting on a recent situation, I found myself feeling profoundly sad. Despite the emotional impact, I did not have any particular thoughts about social media itself. I responded to the situation by seeking support from a close friend and took some time for self-care. In terms of support, I identified a desire to talk things through with someone who understands me. If a friend were to encounter a similar situation, I would suggest they reach out to someone they trust and take time to focus on their well-being.",
         "chat_history": [
             [
                 "ai",
-                "Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. \n\n I'll start with a general question and then we'll move to a specific situation you remember. \n\n  Let me know when you're ready! "
+                "Hi there -- I'm helping young people reflect on their recent social media experiences. This is the story you shared with me previously -- let's reflect on it together. \n \n Lately, I've been feeling pretty down because of stuff I see online. My friend posted about Trump, and honestly, I think he sucks. Seeing their posts about him just makes me feel sad. It's like every time I scroll through my feed, there's something from them about him that just brings me down. The worst part is how sad it makes me feel, like a cloud hanging over my day. I guess I need to find a way to avoid those posts or maybe take a break from social media for a bit.Let me know when you're ready!"
             ],
             [
                 "human",
-                "hi"
+                "ready freddie"
             ],
             [
                 "ai",
-                "Hi! Thanks for being willing to share your experience. Let's start with a general question: What do you find most challenging about your current social media use?"
+                "Great! Let's start by reflecting on this situation together. When you think back to this experience with your friend's posts, how did it affect you emotionally and mentally?"
             ],
             [
                 "human",
-                "too much use"
+                "i was so sad"
             ],
             [
                 "ai",
-                "I understand, it can be tough to manage the time spent on social media. Now, let's talk about a specific experience you've had. Can you tell me what happened? Specifically, what was said, posted, or done?"
+                "I'm really sorry to hear that it made you feel so sad. It's tough when something online affects us like that. What did this experience make you think about social media in general?"
             ],
             [
                 "human",
-                "saw a post about trump"
+                "i didn't"
             ],
             [
                 "ai",
-                "Thanks for sharing that. Could you tell me a bit more about the post? What was it about, and how did it affect you?"
+                "I understand. It can be hard to process everything at once. When you think about social media now, does this experience change how you feel about it or how you use it?"
             ],
             [
                 "human",
-                "i hate turmp"
+                "no"
             ],
             [
                 "ai",
-                "I hear you, and it sounds like the post really stirred up some strong feelings. Can you share a bit more about the context? What else should we know about the situation?"
+                "That's okay. Sometimes experiences don't change how we feel about social media overall. When this happened, did you do anything specific or seek any support to help you cope with the situation?"
             ],
             [
                 "human",
-                "so sad"
+                "no"
             ],
             [
                 "ai",
-                "I'm sorry to hear that it made you feel sad. Could you tell me a bit more about why it made you feel that way or what was happening around that time?"
+                "It's understandable that you might not have taken any action at the time. Reflecting on it now, what kind of support would you have liked when this situation happened? What support do you think should be available for situations like this?"
             ],
             [
                 "human",
-                "so sad"
+                "none"
             ],
             [
                 "ai",
-                "I understand that it made you feel really sad. If you're comfortable, could you share a bit more about how you reacted to the situation? How did it impact your day or your mood?"
+                "It's okay if you feel like you didn't need any support at the time. Everyone handles things differently. If this situation happened to a friend, what would you recommend they do to handle it?"
             ],
             [
                 "human",
-                "i felt sad"
+                "nothing"
             ],
             [
                 "ai",
-                "Thank you for sharing that with me. It sounds like it was a tough experience. What would you say was the worst part of the situation for you?"
-            ],
-            [
-                "human",
-                "everything was worst"
-            ],
-            [
-                "ai",
-                "It sounds like the whole experience was really overwhelming for you. Thank you for sharing your story with me. If you ever want to talk more about it or need support, I'm here to help. \n\nFINISHED"
+                "It's alright if you feel that way. Everyone has their own way of dealing with things. Thank you for sharing your thoughts with me. \n\nFINISHED"
             ]
         ],
         "answer set": {
-            "context": "null",
-            "what": "saw a post about trump",
-            "reaction": "everything was worst",
-            "outcome": "i felt sad"
+            "perspective": "null",
+            "recommendation": "nothing",
+            "feeling": "i was so sad",
+            "reaction": "no",
+            "desiredreaction": "none"
         },
-        "chat_id": "ashish1-20241109162015"
+        "chat_id": "ashish1"
     }
 ]
