@@ -1,0 +1,85 @@
+[
+    {
+        "judgment": "Ready as is!",
+        "scenarios_all": {
+            "col2": "Looking back on the situation, I remember feeling really sad. I didn't really have any specific thoughts about social media itself. I didn't respond in any particular way or seek support, and honestly, I didn't feel like I needed any support at the time. If a friend were to go through something similar, I would probably just tell them to do nothing, as that's what felt right for me.",
+            "fb1": null,
+            "col3": "Reflecting on a recent experience, I felt really sad. The situation didn't change my perspective on social media, nor did it prompt me to seek any support or respond in a particular way. I didn't feel like I needed any support at the time, and if a friend were to go through something similar, I wouldn't have any specific advice for them on how to respond.",
+            "fb3": null,
+            "col1": "Reflecting on a recent situation, I found myself feeling profoundly sad. Despite the emotional impact, I did not have any particular thoughts about social media itself. I did not respond to the situation by seeking support or taking any specific actions. In terms of support, I did not identify any particular needs or desires for assistance. If a friend were to encounter a similar situation, I would not suggest any particular course of action for them to take.",
+            "fb2": null
+        },
+        "timestamp": "2024-11-18 20:39:28",
+        "scenario": "Reflecting on a recent situation, I found myself feeling profoundly sad. Despite the emotional impact, I did not have any particular thoughts about social media itself. I responded to the situation by seeking support from a close friend and took some time for self-care. In terms of support, I identified a desire to talk things through with someone who understands me. If a friend were to encounter a similar situation, I would suggest they reach out to someone they trust and take time to focus on their well-being.",
+        "chat_history": [
+            [
+                "ai",
+                "Hi there -- I'm helping young people reflect on their recent social media experiences. This is the story you shared with me previously -- let's reflect on it together. \n \n Lately, I've been feeling pretty down because of stuff I see online. My friend posted about Trump, and honestly, I think he sucks. Seeing their posts about him just makes me feel sad. It's like every time I scroll through my feed, there's something from them about him that just brings me down. The worst part is how sad it makes me feel, like a cloud hanging over my day. I guess I need to find a way to avoid those posts or maybe take a break from social media for a bit.Let me know when you're ready!"
+            ],
+            [
+                "human",
+                "ready freddie"
+            ],
+            [
+                "ai",
+                "Great! Let's start by reflecting on this situation together. When you think back to this experience with your friend's posts, how did it affect you emotionally and mentally?"
+            ],
+            [
+                "human",
+                "i was so sad"
+            ],
+            [
+                "ai",
+                "I'm really sorry to hear that it made you feel so sad. It's tough when something online affects us like that. What did this experience make you think about social media in general?"
+            ],
+            [
+                "human",
+                "i didn't"
+            ],
+            [
+                "ai",
+                "I understand. It can be hard to process everything at once. When you think about social media now, does this experience change how you feel about it or how you use it?"
+            ],
+            [
+                "human",
+                "no"
+            ],
+            [
+                "ai",
+                "That's okay. Sometimes experiences don't change how we feel about social media overall. When this happened, did you do anything specific or seek any support to help you cope with the situation?"
+            ],
+            [
+                "human",
+                "no"
+            ],
+            [
+                "ai",
+                "It's understandable that you might not have taken any action at the time. Reflecting on it now, what kind of support would you have liked when this situation happened? What support do you think should be available for situations like this?"
+            ],
+            [
+                "human",
+                "none"
+            ],
+            [
+                "ai",
+                "It's okay if you feel like you didn't need any support at the time. Everyone handles things differently. If this situation happened to a friend, what would you recommend they do to handle it?"
+            ],
+            [
+                "human",
+                "nothing"
+            ],
+            [
+                "ai",
+                "It's alright if you feel that way. Everyone has their own way of dealing with things. Thank you for sharing your thoughts with me. \n\nFINISHED"
+            ]
+        ],
+        "answer set": {
+            "perspective": "null",
+            "recommendation": "nothing",
+            "feeling": "i was so sad",
+            "reaction": "no",
+            "desiredreaction": "none"
+        },
+        "chat_id": "ashish1"
+    }
+]

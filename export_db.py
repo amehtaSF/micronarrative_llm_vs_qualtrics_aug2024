@@ -50,7 +50,11 @@ def export_dynamodb_to_json(table_name, output_file):
 
 if __name__ == '__main__':
     
-    DYNAMODB_TABLE_NAME = 'petr_micronarrative_nov2024'
-    OUTPUT_FILE = 'petr_micronarrative_nov2024.json'
+    DYNAMODB_TABLE_NAME_1 = 'petr_micronarrative_nov2024'
+    OUTPUT_FILE_1 = 'petr_micronarrative_nov2024_pt1.json'
+    export_dynamodb_to_json(DYNAMODB_TABLE_NAME_1, OUTPUT_FILE_1)
     
-    export_dynamodb_to_json(DYNAMODB_TABLE_NAME, OUTPUT_FILE)
+    DYNAMODB_TABLE_NAME_2 = 'petr_micronarrative_nov2024_2'
+    OUTPUT_FILE_2 = 'petr_micronarrative_nov2024_pt2.json'
+    export_dynamodb_to_json(DYNAMODB_TABLE_NAME_2, OUTPUT_FILE_2)
+    

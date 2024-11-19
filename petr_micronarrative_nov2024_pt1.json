@@ -1,0 +1,90 @@
+[
+    {
+        "judgment": "Ready as is!",
+        "scenarios_all": {
+            "col2": "Lately, I've been feeling a bit down about the things I see online, especially when it comes to political stuff. The other day, I came across a post about Trump, and it just hit me hard. I don't really like him, and seeing that post made me feel really sad. It's tough because I want to stay informed, but sometimes the things I see just bring me down. It's like a cloud hanging over my day, and I wish I could shake it off more easily.",
+            "fb1": null,
+            "col3": "Lately, I've been feeling pretty down about some of the stuff I see online, especially when it comes to politics. The other day, I stumbled across a post about Trump, and it just hit me hard. I'm not a fan of his, and seeing his name pop up just reminded me of all the things I dislike. It made me feel really sad, like a cloud hanging over my day. It's tough when something as simple as a social media post can affect your mood so much. I guess I just need to be more mindful about what I'm scrolling through.",
+            "fb3": null,
+            "col1": "Lately, I've been feeling pretty down because of stuff I see online. I came across a post about Trump, and honestly, I think he sucks. Seeing posts about him just makes me feel sad. It's like every time I scroll through my feed, there's something about him that just brings me down. The worst part is how sad it makes me feel, like a cloud hanging over my day. I guess I need to find a way to avoid those posts or maybe take a break from social media for a bit.",
+            "fb2": null
+        },
+        "adaptation_list": [
+            [
+                "my friend posted it",
+                "Lately, I've been feeling pretty down because of stuff I see online. My friend posted about Trump, and honestly, I think he sucks. Seeing their posts about him just makes me feel sad. It's like every time I scroll through my feed, there's something from them about him that just brings me down. The worst part is how sad it makes me feel, like a cloud hanging over my day. I guess I need to find a way to avoid those posts or maybe take a break from social media for a bit."
+            ]
+        ],
+        "timestamp": "2024-11-09 17:12:45",
+        "scenario": "Lately, I've been feeling pretty down because of stuff I see online. My friend posted about Trump, and honestly, I think he sucks. Seeing their posts about him just makes me feel sad. It's like every time I scroll through my feed, there's something from them about him that just brings me down. The worst part is how sad it makes me feel, like a cloud hanging over my day. I guess I need to find a way to avoid those posts or maybe take a break from social media for a bit.",
+        "chat_history": [
+            [
+                "ai",
+                "Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. \n\n I'll start with a general question and then we'll move to a specific situation you remember. \n\n  Let me know when you're ready! "
+            ],
+            [
+                "human",
+                "ready"
+            ],
+            [
+                "ai",
+                "Great! Let's start with the first question: What do you find most challenging about your current social media use?"
+            ],
+            [
+                "human",
+                "too much use"
+            ],
+            [
+                "ai",
+                "Thanks for sharing that. Now, let's talk about a specific experience you had on social media. Can you tell me what happened? Specifically, what was said, posted, or done?"
+            ],
+            [
+                "human",
+                "saw a post about trump"
+            ],
+            [
+                "ai",
+                "Thanks for sharing that. Could you tell me a bit more about the post you saw about Trump? What was it about, and how did it affect you?"
+            ],
+            [
+                "human",
+                "felt sad"
+            ],
+            [
+                "ai",
+                "I understand. It sounds like the post had a strong impact on you. Can you share a bit more about the context? What else should we know about the situation or the post itself?"
+            ],
+            [
+                "human",
+                "trump sux"
+            ],
+            [
+                "ai",
+                "Thanks for sharing that. It sounds like the post was quite negative. Can you tell me more about how this situation made you feel and how you reacted to it?"
+            ],
+            [
+                "human",
+                "felt sad"
+            ],
+            [
+                "ai",
+                "I appreciate you sharing that with me. It seems like the post really affected your emotions. Can you tell me what was the worst part of the situation for you?"
+            ],
+            [
+                "human",
+                "so sad"
+            ],
+            [
+                "ai",
+                "Thank you for sharing your experience with me. I appreciate your openness and honesty. If you have any more thoughts or need support, feel free to reach out. \n\nFINISHED"
+            ]
+        ],
+        "answer set": {
+            "context": "trump sux",
+            "what": "saw a post about trump",
+            "reaction": "so sad",
+            "outcome": "felt sad"
+        },
+        "chat_id": "ashish1"
+    }
+]
