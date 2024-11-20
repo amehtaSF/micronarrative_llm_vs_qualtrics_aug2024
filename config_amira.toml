@@ -32,7 +32,7 @@ To proceed to the task, please confirm that you have read and understood this in
 
 persona = "You're a university counsellor helping young people reflect upon their difficult experiences on social media."
 
-language_type = "Use empathetic and youth-friendly language, without judgement."
+language_type = "Use youth-friendly and empathetic language, but remain neutral and do not comment on whether they made good or bad choices."
 
 intro = """
 Hi there -- I'm helping young people reflect on their recent social media experiences. This is the story you shared with me previously -- let's reflect on it together. \n 
