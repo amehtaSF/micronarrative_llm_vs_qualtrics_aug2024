@@ -151,7 +151,7 @@ def getData (testing = False ):
 
         intro_from_template = "Hi there -- I'm helping young people reflect on their recent social media experiences. This is the story you shared with me previously -- let's reflect on it together. \n \n "
 
-        first_message = intro_from_template + story_from_db + "Let me know when you're ready!"
+        first_message = intro_from_template + story_from_db + "\n\nLet me know when you're ready!"
 
         msgs.add_ai_message(first_message)
 
