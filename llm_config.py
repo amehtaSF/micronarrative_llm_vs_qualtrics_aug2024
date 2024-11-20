@@ -32,7 +32,7 @@ class LLMConfig:
             questions_prompt += f"{count+1}. {question}\n"
 
         questions_prompt += f"\nAsk each question one at a time as stated above. You can connect it to what the person said before, but make sure you stay close to the wording of the question while asking them in a naturalistic way.  {data_collection['language_type']} "\
-            "Ensure you get at least a basic answer to each question before moving to the next. "\
+            "Ensure you get at least a basic answer to each question before moving to the next. Remain neutral about the human's answeres and don't judge their responses as 'good' or 'bad'. "\
             "Never answer for the human. "\
             f"If you are unsure what the human meant, ask again. {data_collection['topic_restriction']}"
 
