@@ -122,7 +122,7 @@ def getData (testing = False ):
 
     ## if this is the first run, set up the intro 
     if len(msgs.messages) == 0:
-        msgs.add_ai_message("Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. \n\n I'll start with a general question and then we'll move to a specific situation you remember. \n\n  Let me know when you're ready! ")
+        msgs.add_ai_message("Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support young people. I'd appreciate if you could share your experience with me by answering a few questions. \n\n I'll start with a general question and then we'll move to a specific situation you remember. \n\n  Let me know when you're ready! ")
 
 
    # as Streamlit refreshes page after each input, we have to refresh all messages. 
