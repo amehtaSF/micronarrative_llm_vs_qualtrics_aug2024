@@ -663,6 +663,16 @@ def updateFinalScenario (new_scenario):
     st.session_state.scenario_package['scenario'] = new_scenario
     st.session_state.scenario_package['judgment'] = "Ready as is!"
 
+def updateFinalScenario_textEdit (new_scenario):
+    """ Updates the final scenario when the user accepts. 
+    """
+    ## save the adaptation step into the package: 
+    st.session_state.scenario_package['adaptation_list'].append([f"direct_text_edit from: {st.session_state.scenario_package['scenario']}", new_scenario]])
+    
+    st.session_state.scenario_package['scenario'] = new_scenario
+    st.session_state.scenario_package['judgment'] = "Ready as is!"
+
+
 @traceable
 def finaliseScenario():
     """ Procedure governs the last part of the flow, which is the scenario adaptation.
@@ -723,7 +733,7 @@ def finaliseScenario():
             new_scenario = st.text_area("Adapt your story directly", value=package['scenario'], height = 230, label_visibility="hidden")
             
             st.button("I'm happy with my edits", 
-                      on_click=updateFinalScenario,
+                      on_click=updateFinalScenario_textEdit,
                       args=(new_scenario,)
                       )
             st.markdown("\n")
