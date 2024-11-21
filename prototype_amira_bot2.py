@@ -648,14 +648,24 @@ def finaliseScenario():
         original = st.container()
         
         with original:
-            st.markdown(f"It seems that you selected a scenario that you liked: \n\n :green[{package['scenario']}]")
-            st.markdown(f"... but that you also think it: :red[{package['judgment']}]")
+            st.markdown(f"It seems that you selected a story that you liked ... but that you also think it :red[{package['judgment']}]. You can either edit this below, or ask the AI to adapt it for you.)")
 
-
+            st.divider()
+            st.markdown("### Adapt yourself ✍️ :")
+            new_scenario = st.text_area("Adapt your story directly", value=package['scenario'], height = 230, label_visibility="hidden")
+            
+            st.button("I'm happy with my edits", 
+                      on_click=updateFinalScenario,
+                      args=(new_scenario,)
+                      )
+            st.markdown("\n")
+            
         # set up a streamlit container for the new conversation & adapted scenario
         adapt_convo_container = st.container()
         
         with adapt_convo_container:
+            st.divider()
+            st.markdown("### Adapt with AI 🦾 :")
             st.chat_message("ai").write("Okay, what's missing or could change to make this better?")
         
             # once user enters something 
