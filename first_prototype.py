@@ -156,7 +156,7 @@ def getData (testing = False ):
             # If finished, move the flow to summarisation, otherwise continue.
             if "FINISHED" in response['response']:
                 st.divider()
-                st.chat_message("ai").write("Great, I think I got all I need -- but let me double check!")
+                st.chat_message("ai").write("Thank you for sharing your experience with us.")
 
                 # call the summarisation  agent
                 st.session_state.agentState = "summarise"
