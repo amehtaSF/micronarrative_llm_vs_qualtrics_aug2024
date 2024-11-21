@@ -11,7 +11,7 @@ class LLMConfig:
 
         self.questions_intro = config["collection"]["intro"].strip() 
         self.questions_prompt_template = self.generate_questions_prompt_template(config["collection"])
-        self.questions_outro = "Great, I think I got all I need -- but let me double check!"
+        self.questions_outro = "Thank you for sharing your experiences with us."
 
         self.extraction_task = "Create a scenario based on these responses."
         self.extraction_prompt_template = self.generate_extraction_prompt_template(config["summaries"])
