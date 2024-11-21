@@ -667,7 +667,7 @@ def updateFinalScenario_textEdit (new_scenario):
     """ Updates the final scenario when the user accepts. 
     """
     ## save the adaptation step into the package: 
-    st.session_state.scenario_package['adaptation_list'].append([f"direct_text_edit from: {st.session_state.scenario_package['scenario']}", new_scenario]])
+    st.session_state.scenario_package['adaptation_list'].append([f"direct_text_edit from: {st.session_state.scenario_package['scenario']}", new_scenario])
     
     st.session_state.scenario_package['scenario'] = new_scenario
     st.session_state.scenario_package['judgment'] = "Ready as is!"
