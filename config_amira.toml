@@ -13,7 +13,7 @@
 # this is the text that will be shown on the first page 
 [consent]
 
-intro_and_consent = """## Welcome to our reflectiion chatbot. 
+intro_and_consent = """## Welcome to our reflection chatbot. 
 
 In this task you’re going to engage with a prototype chatbot that asks you to reflect on a recent social media experience. \
 Please answer the questions in relation to the story that you created during the first chatbot interaction. \
