@@ -688,7 +688,7 @@ def finaliseScenario():
         st.markdown(":tada: Yay! :tada:")
         st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Your code for Prolific is '**CyberCorgi CodeCrumbs**.' Copy this now as you will need it to complete the survey.")
         st.markdown("")
-        st.markdown("Please keep this window open until you complete the entire study.")
+        st.markdown("Please keep this window open until you complete the entire study. You may refer back to the scenario here at any point.")
         st.markdown("")
         st.markdown(f":green[{package['scenario']}]")
         
