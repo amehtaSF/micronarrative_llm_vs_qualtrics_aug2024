@@ -13,6 +13,7 @@ from streamlit_feedback import streamlit_feedback
 from datetime import datetime
 import boto3
 from functools import partial
+import random
 
 import os
 import sys
@@ -46,6 +47,24 @@ part2_table = dynamodb.Table('petr_micronarrative_nov2024_2')
 # Initialize user
 st.session_state['chat_id'] = st.query_params["pid"] if "pid" in st.query_params else "00000"
 st.session_state['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def generate_three_word_code():
+    code_words = [
+    "cyber", "corgi", "code", "crumbs", "pixel", "byte", 
+    "glitch", "spark", "nova", "flux", "pulse", "zap", 
+    "astro", "raven", "cloud", "quantum", "neon", "drone", 
+    "blip", "ether", "matrix", "nano", "orbit", "vortex", 
+    "laser", "gizmo", "quark", "cipher", "halo", "echo", 
+    "bot", "wired", "binary", "retro", "station", "signal", 
+    "ion", "relay", "modem", "cosmic", "crystal", "plasma", 
+    "void", "circuit", "module", "sparkle", "bytecode", "proto", 
+    "fission", "fragment", "core", "aurora", "stellar", "tachyon", 
+    "quantum", "bit", "grid", "zenith", "alpha", "omega"
+]
+    selected_words = random.sample(code_words, 3)  # Choose three unique words
+    return '-'.join(selected_words)  # Concatenate with hyphens
+
+
 
 # Get the prolific id from the query params
 prolific_id = st.query_params["pid"]
@@ -87,6 +106,9 @@ if 'exp_data' not in st.session_state:
 if 'llm_model' not in st.session_state:
     # st.session_state.llm_model = "gpt-3.5-turbo-1106"
     st.session_state.llm_model = "gpt-4o"
+    
+if 'study_code' not in st.session_state:
+    st.session_state.study_code = generate_three_word_code()
 
 # Set up memory for the lanchchain conversation bot
 msgs = StreamlitChatMessageHistory(key="langchain_messages")
@@ -632,12 +654,15 @@ def finaliseScenario():
         
         # ADDED CODE -- ASHISH
         package['chat_history'] = [(msg.type, msg.content) for msg in package['chat_history'].messages]
+        package['study_code'] = st.session_state.study_code
         part2_table.put_item(
             Item=package
         )
         
         st.markdown(":tada: Congratulations! :tada:")
-        st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Your code for Prolific is '**CyberCorgi CodeCrumbsX**.' Copy this now as you will need it to complete the survey.")
+        # st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Your code for Prolific is '**CyberCorgi CodeCrumbsX**.' Copy this now as you will need it to complete the survey.")
+        
+        st.markdown(f"You've now completed the interaction and hopefully found a scenario that you liked! Your code for Prolific is {st.session_state.study_code} Copy this now as you will need it to complete the survey.")
         st.markdown(f":green[{package['scenario']}]")
         st.markdown("Please return to the survey window and complete the rest of the survey. Remember that the study is not completed until you answer all the survey questions.")
     
