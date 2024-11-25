@@ -48,20 +48,34 @@ part2_table = dynamodb.Table('petr_micronarrative_nov2024_2')
 st.session_state['chat_id'] = st.query_params["pid"] if "pid" in st.query_params else "00000"
 st.session_state['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def generate_three_word_code():
+def generate_code(words=4):
     code_words = [
-    "cyber", "corgi", "code", "crumbs", "pixel", "byte", 
-    "glitch", "spark", "nova", "flux", "pulse", "zap", 
-    "astro", "raven", "cloud", "quantum", "neon", "drone", 
-    "blip", "ether", "matrix", "nano", "orbit", "vortex", 
-    "laser", "gizmo", "quark", "cipher", "halo", "echo", 
-    "bot", "wired", "binary", "retro", "station", "signal", 
-    "ion", "relay", "modem", "cosmic", "crystal", "plasma", 
-    "void", "circuit", "module", "sparkle", "bytecode", "proto", 
-    "fission", "fragment", "core", "aurora", "stellar", "tachyon", 
-    "quantum", "bit", "grid", "zenith", "alpha", "omega"
-]
-    selected_words = random.sample(code_words, 3)  # Choose three unique words
+        "cyber", "corgi", "code", "crumbs", "pixel", "byte",
+        "glitch", "spark", "nova", "flux", "pulse", "zap",
+        "astro", "raven", "cloud", "quant", "neon", "drone",
+        "blip", "ether", "matrix", "nano", "orbit", "vortex",
+        "laser", "gizmo", "quark", "cipher", "halo", "echo",
+        "bot", "wired", "retro", "holo", "ion", "relay",
+        "modem", "cosmic", "crystal", "plasma", "void", "core",
+        "proto", "blaze", "sparkle", "fizz", "flare", "pulse",
+        "bit", "grid", "zenith", "proto", "fuse", "warp",
+        "shock", "pulse", "radar", "beam", "flash", "ray",
+        "storm", "cloud", "lumen", "prism", "echo", "phase",
+        "quant", "mod", "flux", "arc", "cell", "neon",
+        "mesh", "node", "fire", "wave", "spark", "blitz",
+        "pulse", "gear", "crash", "dust", "crisp", "click",
+        "ping", "lock", "hash", "link", "clip", "disk",
+        "trace", "shell", "trail", "shine", "shade", "scale",
+        "drift", "bliss", "chant", "chime", "grace", "glint",
+        "path", "sharp", "map", "wrap", "stone", "frost",
+        "mist", "charm", "blast", "bond", "bridge", "steel",
+        "thorn", "ice", "lock", "gate", "rift", "phase",
+        "flick", "vault", "vault", "scout", "watch", "peak",
+        "row", "key", "set", "dot", "trail", "prism",
+        "chime", "orbit", "fuse", "clip", "block", "lint",
+        "chime", "bell", "shine", "mist", "deck", "vibe",
+    ]
+    selected_words = random.sample(code_words, words)  # Choose three unique words
     return '-'.join(selected_words)  # Concatenate with hyphens
 
 
@@ -108,7 +122,7 @@ if 'llm_model' not in st.session_state:
     st.session_state.llm_model = "gpt-4o"
     
 if 'study_code' not in st.session_state:
-    st.session_state.study_code = generate_three_word_code()
+    st.session_state.study_code = generate_code()
 
 # Set up memory for the lanchchain conversation bot
 msgs = StreamlitChatMessageHistory(key="langchain_messages")
