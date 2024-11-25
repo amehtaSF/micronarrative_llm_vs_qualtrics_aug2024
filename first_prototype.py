@@ -686,7 +686,7 @@ def finaliseScenario():
     # if scenario is judged as 'ready' by the user -- we're done
     if package['judgment'] == "Ready as is!":
         st.markdown(":tada: Yay! :tada:")
-        st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Your code for Prolific is '**CyberCorgi CodeCrumbs**'")
+        st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Your code for Prolific is '**CyberCorgi CodeCrumbs**.' Copy this now as you will need it to complete the survey.")
         st.markdown("")
         st.markdown("Please keep this window open until you complete the entire study.")
         st.markdown("")
