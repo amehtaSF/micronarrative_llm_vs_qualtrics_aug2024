@@ -1,0 +1,44 @@
+---
+title: "add_scenarios_qualtrics.Rmd"
+output: html_document
+date: "2024-12-03"
+---
+
+```{r}
+
+# install.packages("tidyverse")
+# install.packages("tidylog")
+# install.packages("here")
+library(tidyverse)
+library(tidylog)
+library(here)
+```
+
+```{r}
+df_qualtrics_raw <- read_csv(here("data/raw/LLM_LargeStudy_Nov24_December 3, 2024_10.56.csv"))
+df_scenarios_1_raw <- read_csv(here("final_scenarios_pt1.csv"))
+df_scenarios_2_raw <- read_csv(here("final_scenarios_pt2.csv"))
+```
+
+
+```{r}
+
+df_scenarios_1 <- df_scenarios_1_raw %>% 
+  rename_all(~paste0(., "_pt1")) 
+
+df_scenarios_2 <- df_scenarios_2_raw %>% 
+  rename_all(~paste0(., "_pt2"))
+
+df_qualtrics <- df_qualtrics_raw %>% 
+  full_join(df_scenarios_1, by = c("PROLIFIC_PID" = "pid_pt1")) %>%
+  full_join(df_scenarios_2, by = c("PROLIFIC_PID" = "pid_pt2"))
+  
+```
+
+```{r}
+df_qualtrics %>% 
+  write_csv(here("data/proc/qualtrics_and_chatbot.csv"))
+```
+
+
+
